@@ -6,8 +6,11 @@ venv/
 meeting_records.db
 
 # Any other specific logs, caches, or compiled files:
-*.pyc
+# Python cache
 __pycache__/
+*.pyc
+*.pyo
+
 .env
 
 old/
