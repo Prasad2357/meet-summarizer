@@ -1,0 +1,8 @@
+instead of local LLM I can use Gemini API for better responses
+
+Implement RAG for better retrieval from the transcript 
+(chatbot that can ask questions regarding the meet )
+
+for sentiment analysis, can use ML
+
+calendar tool integration (on basis of notes)

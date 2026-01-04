@@ -1,0 +1,13 @@
+# Virtual environment
+venv/
+/venv/
+
+# Database file
+meeting_records.db
+
+# Any other specific logs, caches, or compiled files:
+*.pyc
+__pycache__/
+.env
+
+old/
