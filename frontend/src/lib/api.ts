@@ -3,7 +3,7 @@ const API_BASE_URL = "http://127.0.0.1:8000"
 
 export async function fetchMeetings(limit = 50, skip = 0) {
     const res = await fetch(
-        `${API_BASE_URL}/summarize/?limit=${limit}&skip=${skip}`
+        `${API_BASE_URL}/records/?limit=${limit}&skip=${skip}`
     )
 
 if (!res.ok) {
@@ -15,7 +15,7 @@ if (!res.ok) {
 
 export async function fetchMeetingById(id:string) {
     const res = await fetch(
-        `${API_BASE_URL}/summarize/${id}/`
+        `${API_BASE_URL}/records/${id}/`
     )
 
     if (!res.ok) {

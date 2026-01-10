@@ -2,6 +2,7 @@ import MeetingCard from "../components/meeting/MeetingCard";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import type { MeetingListItem } from "../types/meeting";
+import type { UploadResponse } from "../types/meeting";
 import { fetchMeetings } from "../lib/api";
 import NewAnalysisModal from "../components/new-analysis/NewAnalysisModal";
 import { Button } from "../components/ui/button";
@@ -39,7 +40,7 @@ export default function DashboardPage() {
 
     return (
 
-        <div className="p-8 space-y-6">
+        <div className="p-6 space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">Dashboard</h1>
 
@@ -69,9 +70,20 @@ export default function DashboardPage() {
             {/* Modal */}
             <NewAnalysisModal
                 open={open}
-                onClose={() => setOpen(false)} />
-
-
+                onClose={() => setOpen(false)}
+                onCreated={(newMeeting: UploadResponse) => {
+                    const newItem: MeetingListItem = {
+                        id: newMeeting.id,
+                        file_name: newMeeting.file_name,
+                        meeting_type: newMeeting.meeting_type,
+                        executive_summary: newMeeting.summary?.executive_summary ?? "Meeting summary generated",
+                        action_items_count: newMeeting.metadata.action_items,
+                        blockers_count: newMeeting.metadata.blockers,
+                        created_at: new Date().toISOString(),
+                    };
+                    setMeetings((prev) => [newItem, ...prev]);
+                }}
+            />
         </div>
 
 

@@ -66,6 +66,7 @@ async def process_audio(
     # Return enhanced response with metadata
     return {
         "id": record.id,
+        "file_name": file.filename,  # Add this line
         "meeting_type": meeting_type,
         "summary": summary_data,
         "metadata": {
@@ -136,6 +137,7 @@ async def process_text(
     # Return enhanced response with metadata
     return {
         "id": record.id,
+        "file_name": file.filename,  # Add this line
         "meeting_type": meeting_type,
         "summary": summary_data,
         "metadata": {

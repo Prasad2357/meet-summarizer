@@ -2,19 +2,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { uploadAudio, uploadText } from "../../lib/api"
+import type { MeetingListItem } from "../../types/meeting"
+import type { UploadResponse } from "../../types/meeting";  // Add this import
 
 type Props = {
-    open: boolean
-    onClose: () => void
+    open: boolean;
+    onClose: () => void;
+    onCreated: (meeting: UploadResponse) => void;  // Change the type here
 }
 
 type AnalysisType = "audio" | "text"
 
-export default function NewAnalysisModal({ open, onClose }: Props) {
+export default function NewAnalysisModal({ open, onClose, onCreated }: Props) {
     const [mode, setMode] = useState<"audio" | "text">("audio")
-    const [type, setType] = useState<AnalysisType>("audio")
+    // const [type, setType] = useState<AnalysisType>("audio")
     const [file, setFile] = useState<File | null>(null)
-    const [precision, setPrecision] = useState<"fast" | "high">("fast")
+    // const [precision, setPrecision] = useState<"fast" | "high">("fast")
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -29,6 +32,9 @@ export default function NewAnalysisModal({ open, onClose }: Props) {
             const result = mode === "audio"
                 ? await uploadAudio(file)
                 : await uploadText(file)
+            
+            onCreated(result)
+            onClose()
         }
         catch (err) {
             setError("Failed to upload file.")
@@ -69,7 +75,7 @@ export default function NewAnalysisModal({ open, onClose }: Props) {
 
                 <input
                     type="file"
-                    accept={mode === "audio" ? ".mp3,.wav" : ".txt,.md,.json"}
+                    accept={mode === "audio" ? ".mp3,.wav" : ".txt,.md"}
                     className="hidden"
                     id="file-upload"
                     onChange={(e) => {

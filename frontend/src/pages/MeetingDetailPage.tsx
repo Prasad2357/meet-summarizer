@@ -49,7 +49,7 @@ export default function MeetingDetailPage() {
   return (
 
 
-    <div className="p-8 h-[calc(100vh-64px)]">
+    <div className="p-6 h-[calc(100vh-64px)]">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
 
         {/* LEFT PANEL */}
