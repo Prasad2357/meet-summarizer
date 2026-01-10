@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom"
-import { LayoutDashboard, Settings } from "lucide-react"
+import { LayoutDashboard, Settings, Lightbulb } from "lucide-react"
 
 export default function Sidebar() {
     const location = useLocation()
@@ -15,6 +15,11 @@ export default function Sidebar() {
             label: "Settings",
             icon: Settings,
             to: "/settings",
+        },
+        {
+            label: "Insights",
+            icon: Lightbulb,
+            to: "/insights",
         }
 
     ]
