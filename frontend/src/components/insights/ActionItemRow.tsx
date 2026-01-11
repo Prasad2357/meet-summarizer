@@ -1,4 +1,5 @@
 import type { ActionItemOverview } from "../../types/actionItemsOverview";
+import { useNavigate } from "react-router-dom";
 
 type Props = {
   item: ActionItemOverview;
@@ -11,8 +12,12 @@ const priorityColor = {
 };
 
 const ActionItemRow = ({ item }: Props) => {
+  const navigate = useNavigate();
   return (
-    <div className="p-4 flex flex-col gap-2">
+    <div
+      className="p-4 flex flex-col gap-2 cursor-pointer hover:bg-muted"
+      onClick={() => navigate(`/meetings/${item.meeting_id}`)}
+    >
       <div className="flex justify-between">
         <div className="font-medium">{item.task}</div>
         <div className={`text-sm font-medium ${priorityColor[item.priority]}`}>

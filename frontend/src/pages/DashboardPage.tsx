@@ -6,29 +6,32 @@ import type { UploadResponse } from "../types/meeting";
 import { fetchMeetings } from "../lib/api";
 import NewAnalysisModal from "../components/new-analysis/NewAnalysisModal";
 import { Button } from "../components/ui/button";
+import Pagination from "../components/common/Pagination";
 
 export default function DashboardPage() {
     const [meetings, setMeetings] = useState<MeetingListItem[]>([])
+    const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [open, setOpen] = useState(false)
+    const PAGE_SIZE = 12;
+    const [page, setPage] = useState(1);
+
 
     useEffect(() => {
-        async function loadMeetings() {
-            try {
-                const data = await fetchMeetings()
-                setMeetings(data)
-            }
-            catch (err) {
-                setError("Failed to load meetings.")
-            }
-            finally {
-                setLoading(false)
-            }
-        }
+  setLoading(true);
 
-        loadMeetings()
-    }, [])
+  fetchMeetings(PAGE_SIZE, (page - 1) * PAGE_SIZE)
+    .then((data) => {
+      const items = data.items ?? data;
+      setMeetings(items);
+      setTotal(data.total ?? items.length);
+      setError(null);
+    })
+    .catch(() => setError("Failed to load meetings."))
+    .finally(() => setLoading(false));
+}, [page]);
+
 
     if (loading) {
         return <p className="p-8 text-muted-foreground">Loading meetings...</p>
@@ -37,6 +40,7 @@ export default function DashboardPage() {
     if (error) {
         return <p className="p-8 text-red-500">{error}</p>
     }
+
 
     return (
 
@@ -84,6 +88,13 @@ export default function DashboardPage() {
                     setMeetings((prev) => [newItem, ...prev]);
                 }}
             />
+
+            <Pagination
+  page={page}
+  pageSize={PAGE_SIZE}
+  total={total}
+  onPageChange={setPage}
+/>
         </div>
 
 

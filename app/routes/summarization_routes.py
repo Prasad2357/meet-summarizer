@@ -5,12 +5,12 @@ from typing import List, Optional
 import json
 from app.database import get_db
 from app.models import MeetingRecord
-from app.schemas import MeetingRecordResponse, MeetingRecordListResponse
+from app.schemas import MeetingRecordResponse, MeetingRecordListResponse, PaginatedMeetingRecordResponse
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[MeetingRecordListResponse])
+@router.get("/", response_model=PaginatedMeetingRecordResponse)
 def get_all_records(
     meeting_type: Optional[str] = Query(None, description="Filter by meeting type (standup, planning, retro, client_call, general)"),
     has_blockers: Optional[bool] = Query(None, description="Filter meetings with blockers"),
@@ -33,24 +33,27 @@ def get_all_records(
     if has_red_flags is not None:
         query = query.filter(MeetingRecord.has_red_flags == has_red_flags)
     
+    total = query.count()
     # Order by most recent first
     records = query.order_by(MeetingRecord.created_at.desc()).offset(skip).limit(limit).all()
     
-    # Transform to lightweight list response format
-    result = []
+    items = []
     for r in records:
         summary = json.loads(r.summary_json)
-        result.append({
+        items.append({
             "id": r.id,
             "file_name": r.file_name,
             "meeting_type": r.meeting_type,
             "executive_summary": summary.get("executive_summary", "No summary available"),
             "action_items_count": r.action_items_count,
             "blockers_count": len(summary.get("blockers_and_risks", [])),
-            "created_at": r.created_at
+            "created_at": r.created_at,
         })
-    
-    return result
+
+    return {
+        "items": items,
+        "total": total
+}
 
 
 @router.get("/{record_id}", response_model=MeetingRecordResponse)

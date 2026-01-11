@@ -6,11 +6,11 @@ type Props = {
 
 const KPICard = ({ label, value, loading }: Props) => {
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="text-2xl font-semibold">
+    <div className="rounded-lg border bg-card p-4 min-h-36">
+      <div className="text-4xl font-semibold">
         {loading ? "--" : value ?? "--"}
       </div>
-      <div className="text-sm text-muted-foreground mt-1">
+      <div className="text-md text-muted-foreground mt-1">
         {label}
       </div>
     </div>

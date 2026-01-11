@@ -113,3 +113,7 @@ class MeetingRecordListResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+class PaginatedMeetingRecordResponse(BaseModel):
+    items: List[MeetingRecordListResponse]
+    total: int
