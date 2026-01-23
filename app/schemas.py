@@ -1,5 +1,5 @@
 # app/schemas.py
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Dict
 from datetime import datetime
 
@@ -117,3 +117,17 @@ class MeetingRecordListResponse(BaseModel):
 class PaginatedMeetingRecordResponse(BaseModel):
     items: List[MeetingRecordListResponse]
     total: int
+
+class UserBase(BaseModel):
+    name: str
+    email: EmailStr
+
+class UserCreate(UserBase):
+    pass
+
+class UserResponse(UserBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
