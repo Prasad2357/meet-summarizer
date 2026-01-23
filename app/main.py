@@ -1,7 +1,10 @@
 from fastapi import FastAPI
-from app.routes import transcription_routes, summarization_routes
+from app.routes import transcription_routes, summarization_routes, user_routes
 from app.database import Base, engine
 from fastapi.middleware.cors import CORSMiddleware
+from app.models import User  # IMPORTANT: ensure User is imported
+from app.models import Base
+from sqlalchemy import create_engine
 
 # Create DB tables
 Base.metadata.create_all(bind=engine)
@@ -23,3 +26,4 @@ app.add_middleware(
 # Register routes
 app.include_router(transcription_routes.router, prefix="/process", tags=["Processing"])
 app.include_router(summarization_routes.router, prefix="/records", tags=["Records"])
+app.include_router(summarization_routes.router, prefix="/users", tags=["Users"])
