@@ -26,4 +26,4 @@ app.add_middleware(
 # Register routes
 app.include_router(transcription_routes.router, prefix="/process", tags=["Processing"])
 app.include_router(summarization_routes.router, prefix="/records", tags=["Records"])
-app.include_router(summarization_routes.router, prefix="/users", tags=["Users"])
+app.include_router(user_routes.router, prefix="/users", tags=["Users"])
