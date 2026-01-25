@@ -7,6 +7,7 @@ from app import transcription, summarizer
 from app import models
 from app.config import UPLOAD_DIR, OLLAMA_MODEL, WHISPER_MODEL_SIZE
 from app.schemas import TranscriptInput
+from app.models import User
 
 
 router = APIRouter()
@@ -15,6 +16,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.post("/audio")
 async def process_audio(
+    user_id: int = Form(...),
     file: UploadFile = File(...),
     meeting_type: Optional[str] = Form("auto"),  # NEW: Allow user to specify or auto-detect
     db: Session = Depends(get_db)
@@ -23,12 +25,18 @@ async def process_audio(
     Process audio file and generate intelligent summary.
     
     Args:
+        user_id: ID of the user
         file: Audio file (mp3, wav, m4a, etc.)
         meeting_type: Type of meeting - "auto", "standup", "planning", "retro", "client_call", "general"
     
     Returns:
         Meeting record ID, summary, and metadata
     """
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
     # Save uploaded file
     file_path = os.path.join(UPLOAD_DIR, file.filename)
     with open(file_path, "wb") as buffer:
@@ -51,6 +59,7 @@ async def process_audio(
 
     # Save to database with enhanced fields
     record = models.MeetingRecord(
+        user_id=user_id,
         file_name=file.filename,
         transcript=transcript_text,
         summary_json=json.dumps(summary_data),
@@ -81,6 +90,7 @@ async def process_audio(
 
 @router.post("/text")
 async def process_text(
+    user_id: int = Form(...),
     file: UploadFile = File(...),
     meeting_type: Optional[str] = Form("auto"),  # NEW: Allow user to specify or auto-detect
     db: Session = Depends(get_db)
@@ -89,12 +99,17 @@ async def process_text(
     Process text transcript file and generate intelligent summary.
     
     Args:
+        user_id: ID of the user
         file: Text file containing meeting transcript (.txt, .md)
         meeting_type: Type of meeting - "auto", "standup", "planning", "retro", "client_call", "general"
     
     Returns:
         Meeting record ID, summary, and metadata
     """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
     # Save uploaded file
     file_path = os.path.join(UPLOAD_DIR, file.filename)
     with open(file_path, "wb") as buffer:
@@ -122,6 +137,7 @@ async def process_text(
 
     # Save to database with enhanced fields
     record = models.MeetingRecord(
+        user_id=user_id,
         file_name=file.filename,
         transcript=transcript_text,
         summary_json=json.dumps(summary_data),
