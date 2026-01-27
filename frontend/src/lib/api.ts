@@ -1,68 +1,103 @@
 const API_BASE_URL = "http://127.0.0.1:8000"
 
+// Helper function to get auth headers
+function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem("access_token");
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  return headers;
+}
+
 export async function fetchMeetings(limit = 50, skip = 0) {
-    const res = await fetch(
-        `${API_BASE_URL}/records/?limit=${limit}&skip=${skip}`
-    )
-
-if (!res.ok) {
-    throw new Error("Failed to fetch meetings")
-}
-    return res.json()
-}
-
-
-export async function fetchMeetingById(id:string) {
-    const res = await fetch(
-        `${API_BASE_URL}/records/${id}/`
-    )
-
-    if (!res.ok) {
-        throw new Error("Failed to fetch meeting")
+  const res = await fetch(
+    `${API_BASE_URL}/records/?limit=${limit}&skip=${skip}`,
+    {
+      headers: getAuthHeaders(),
     }
-    return res.json()
+  )
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch meetings")
+  }
+  return res.json()
+}
+
+
+export async function fetchMeetingById(id: string) {
+  const res = await fetch(
+    `${API_BASE_URL}/records/${id}/`,
+    {
+      headers: getAuthHeaders(),
+    }
+  )
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch meeting")
+  }
+  return res.json()
 }
 
 export async function uploadAudio(file: File) {
-    const formData = new FormData()
-    formData.append("file", file)
+  const token = localStorage.getItem("access_token");
+  const formData = new FormData()
+  formData.append("file", file)
 
-    const res = await fetch(
-        `${API_BASE_URL}/process/audio`, {
-            method: "POST",
-            body: formData,
-        }
-    )
+  const headers: HeadersInit = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
-    if (!res.ok) {
-        throw new Error("Failed to upload audio file")
-    }
-    return res.json()
+  const res = await fetch(
+    `${API_BASE_URL}/process/audio`, {
+    method: "POST",
+    headers,
+    body: formData,
+  }
+  )
+
+  if (!res.ok) {
+    throw new Error("Failed to upload audio file")
+  }
+  return res.json()
 }
 
 export async function uploadText(file: File) {
-    const formData = new FormData()
-    formData.append("file", file)
+  const token = localStorage.getItem("access_token");
+  const formData = new FormData()
+  formData.append("file", file)
 
-    const res = await fetch(
-        `${API_BASE_URL}/process/text`, {
-            method: "POST",
-            body: formData,
+  const headers: HeadersInit = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
-        }
+  const res = await fetch(
+    `${API_BASE_URL}/process/text`, {
+    method: "POST",
+    headers,
+    body: formData,
+  }
+  )
 
-    )
-
-    if (!res.ok) {
-        throw new Error("Failed to upload text file")
-    }   
-    return res.json()
+  if (!res.ok) {
+    throw new Error("Failed to upload text file")
+  }
+  return res.json()
 }
 
 
 export async function fetchOverviewStats() {
   const res = await fetch(
-    `${API_BASE_URL}/records/stats/overview`
+    `${API_BASE_URL}/records/stats/overview`,
+    {
+      headers: getAuthHeaders(),
+    }
   );
 
   if (!res.ok) {
@@ -74,7 +109,10 @@ export async function fetchOverviewStats() {
 
 export async function fetchPendingActionItems() {
   const res = await fetch(
-    `${API_BASE_URL}/records/action-items/pending`
+    `${API_BASE_URL}/records/action-items/pending`,
+    {
+      headers: getAuthHeaders(),
+    }
   );
 
   if (!res.ok) {
@@ -86,7 +124,10 @@ export async function fetchPendingActionItems() {
 
 export async function fetchActiveBlockers() {
   const res = await fetch(
-    `${API_BASE_URL}/records/blockers/active`
+    `${API_BASE_URL}/records/blockers/active`,
+    {
+      headers: getAuthHeaders(),
+    }
   );
 
   if (!res.ok) {
@@ -95,3 +136,43 @@ export async function fetchActiveBlockers() {
 
   return res.json();
 }
+
+// Authentication APIs
+export async function signup(name: string, email: string, password: string) {
+  const res = await fetch(
+    `${API_BASE_URL}/users/signup`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name, email, password }),
+  }
+  );
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: "Signup failed" }));
+    throw new Error(error.detail || "Signup failed");
+  }
+
+  return res.json();
+}
+
+export async function login(email: string, password: string) {
+  const res = await fetch(
+    `${API_BASE_URL}/users/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password }),
+  }
+  );
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: "Invalid credentials" }));
+    throw new Error(error.detail || "Login failed");
+  }
+
+  return res.json();
+}
+

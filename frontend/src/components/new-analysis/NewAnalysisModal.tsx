@@ -32,12 +32,14 @@ export default function NewAnalysisModal({ open, onClose, onCreated }: Props) {
             const result = mode === "audio"
                 ? await uploadAudio(file)
                 : await uploadText(file)
-            
+
+            console.log("Upload result:", result);
             onCreated(result)
             onClose()
         }
         catch (err) {
-            setError("Failed to upload file.")
+            console.error("Upload error:", err);
+            setError(err instanceof Error ? err.message : "Failed to upload file.")
         }
         finally {
             setSubmitting(false)
@@ -109,7 +111,7 @@ export default function NewAnalysisModal({ open, onClose, onCreated }: Props) {
                         {error}
                     </p>
                 )}
-                
+
                 <Button className="mt-6 w-full" disabled={!file || submitting} onClick={handleSubmit}>
                     {submitting ? "Processing..." :
                         mode === "audio"
