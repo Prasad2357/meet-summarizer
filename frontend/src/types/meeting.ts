@@ -10,17 +10,5 @@ export type MeetingListItem = {
 
 export type UploadResponse = {
   id: number;
-  file_name: string;
-  meeting_type: string;
-  summary: {
-    executive_summary: string;
-    // Add other summary fields as needed for type safety
-  };
-  metadata: {
-    action_items: number;
-    blockers: number;
-    red_flags: number;
-    key_decisions: number;
-    questions_raised: number;
-  };
+  status: string;  // "processing", "done", "failed"
 };

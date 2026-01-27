@@ -66,27 +66,27 @@ class FollowUp(BaseModel):
 
 
 class SentimentAnalysis(BaseModel):
-    overall_mood: str
-    concerns_level: str
-    team_confidence: str
+    overall_mood: Optional[str] = "neutral"
+    concerns_level: Optional[str] = "low"
+    team_confidence: Optional[str] = "moderate"
 
 
 class EnhancedSummary(BaseModel):
-    meeting_type: str
-    meeting_date: str
-    executive_summary: str
+    meeting_type: Optional[str] = "general"
+    meeting_date: Optional[str] = ""
+    executive_summary: Optional[str] = ""
     key_decisions: List[KeyDecision] = []
     action_items: List[ActionItem] = []
     discussion_points: List[DiscussionPoint] = []
     blockers_and_risks: List[BlockerRisk] = []
     new_requirements: List[NewRequirement] = []
     questions_raised: List[Question] = []
-    metrics_mentioned: MetricsMentioned
+    metrics_mentioned: Optional[MetricsMentioned] = None
     next_steps: List[str] = []
     attendees_mentioned: List[str] = []
-    follow_up_needed: FollowUp
-    context_for_absentees: str
-    sentiment_analysis: SentimentAnalysis
+    follow_up_needed: Optional[FollowUp] = None
+    context_for_absentees: Optional[str] = ""
+    sentiment_analysis: Optional[SentimentAnalysis] = None
     red_flags: List[str] = []
 
 
@@ -96,6 +96,7 @@ class MeetingRecordResponse(BaseModel):
     transcript: str
     summary_json: EnhancedSummary
     meeting_type: str
+    status: str
     created_at: datetime
 
     class Config:
@@ -106,6 +107,7 @@ class MeetingRecordListResponse(BaseModel):
     id: int
     file_name: str
     meeting_type: str
+    status: str
     executive_summary: str
     action_items_count: int
     blockers_count: int

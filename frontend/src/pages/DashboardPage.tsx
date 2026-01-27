@@ -19,18 +19,18 @@ export default function DashboardPage() {
 
 
     useEffect(() => {
-  setLoading(true);
+        setLoading(true);
 
-  fetchMeetings(PAGE_SIZE, (page - 1) * PAGE_SIZE)
-    .then((data) => {
-      const items = data.items ?? data;
-      setMeetings(items);
-      setTotal(data.total ?? items.length);
-      setError(null);
-    })
-    .catch(() => setError("Failed to load meetings."))
-    .finally(() => setLoading(false));
-}, [page]);
+        fetchMeetings(PAGE_SIZE, (page - 1) * PAGE_SIZE)
+            .then((data) => {
+                const items = data.items ?? data;
+                setMeetings(items);
+                setTotal(data.total ?? items.length);
+                setError(null);
+            })
+            .catch(() => setError("Failed to load meetings."))
+            .finally(() => setLoading(false));
+    }, [page]);
 
 
     if (loading) {
@@ -75,26 +75,27 @@ export default function DashboardPage() {
             <NewAnalysisModal
                 open={open}
                 onClose={() => setOpen(false)}
-                onCreated={(newMeeting: UploadResponse) => {
-                    const newItem: MeetingListItem = {
-                        id: newMeeting.id,
-                        file_name: newMeeting.file_name,
-                        meeting_type: newMeeting.meeting_type,
-                        executive_summary: newMeeting.summary?.executive_summary ?? "Meeting summary generated",
-                        action_items_count: newMeeting.metadata.action_items,
-                        blockers_count: newMeeting.metadata.blockers,
-                        created_at: new Date().toISOString(),
-                    };
-                    setMeetings((prev) => [newItem, ...prev]);
+                onCreated={(response: UploadResponse) => {
+                    console.log("Meeting upload started:", response);
+                    // Close modal and refresh the meetings list
+                    setOpen(false);
+                    // Refresh meetings to show the new processing item
+                    fetchMeetings(PAGE_SIZE, (page - 1) * PAGE_SIZE)
+                        .then((data) => {
+                            const items = data.items ?? data;
+                            setMeetings(items);
+                            setTotal(data.total ?? items.length);
+                        })
+                        .catch(() => setError("Failed to refresh meetings."));
                 }}
             />
 
             <Pagination
-  page={page}
-  pageSize={PAGE_SIZE}
-  total={total}
-  onPageChange={setPage}
-/>
+                page={page}
+                pageSize={PAGE_SIZE}
+                total={total}
+                onPageChange={setPage}
+            />
         </div>
 
 
