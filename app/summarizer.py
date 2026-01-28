@@ -5,8 +5,14 @@ from datetime import datetime
 from typing import Dict, Any, List
 import tiktoken
 from rapidfuzz import fuzz
+import logging
+import google.genai as genai  # Updated import
+from app.config import GEMINI_API_KEY, USE_GEMINI, GEMINI_MODEL, OLLAMA_HOST
+
+# Removed global genai.configure() as it is not used in the new SDK
 
 ENCODER = tiktoken.get_encoding("cl100k_base")  # Mistral 7B compatible
+
 
 # ---------------------- Transcript Utilities ----------------------
 
@@ -180,10 +186,152 @@ def normalize_summary_fields(summary: dict) -> dict:
 
     return summary
 
+# ---------------------- LLM Helper Functions ----------------------
+
+def _call_gemini(prompt: str, temperature: float = 0.3) -> str:
+    """Call Gemini API with error handling using new google-genai SDK"""
+    try:
+        client = genai.Client(api_key=GEMINI_API_KEY)
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config={
+                'temperature': temperature,
+                'max_output_tokens': 8192,
+            }
+        )
+        return response.text
+    except Exception as e:
+        logging.error(f"Gemini API error: {str(e)}")
+        raise
+
+
+def _call_ollama(model_name: str, prompt: str, temperature: float = 0.3, max_tokens: int = 8192) -> str:
+    """Call Ollama with error handling"""
+    try:
+        client = ollama.Client(host=OLLAMA_HOST)
+        response = client.generate(
+            model=model_name,
+            prompt=prompt,
+            stream=False,
+            options={"temperature": temperature, "num_predict": max_tokens, "top_p": 0.9}
+        )
+        return response.get("response", "")
+    except Exception as e:
+        logging.error(f"Ollama error: {e}")
+        raise
+
+
+def _get_llm_response(prompt: str, temperature: float = 0.3, model_name: str = None) -> str:
+    """Get LLM response from Gemini (preferred) or Ollama (fallback)"""
+    # Try Gemini first if enabled and API key is available
+    if USE_GEMINI and GEMINI_API_KEY:
+        try:
+            logging.info(f"Using Gemini API ({GEMINI_MODEL})")
+            return _call_gemini(prompt, temperature)
+        except Exception as e:
+            logging.warning(f"Gemini failed, falling back to Ollama: {e}")
+    
+    # Fallback to Ollama
+    if model_name:
+        logging.info(f"Using Ollama ({model_name})")
+        return _call_ollama(model_name, prompt, temperature)
+    
+    raise Exception("No LLM available (Gemini failed and no Ollama model specified)")
+
+
+# ---------------------- Improved Prompt Templates ----------------------
+
+def get_summary_prompt(transcript: str, meeting_type: str) -> str:
+    """Generate comprehensive prompt for meeting summarization"""
+    meeting_contexts = {
+        "standup": "DAILY STANDUP/SCRUM MEETING",
+        "planning": "SPRINT/PROJECT PLANNING MEETING",
+        "retro": "RETROSPECTIVE/POST-MORTEM MEETING",
+        "client_call": "CLIENT MEETING/STAKEHOLDER CALL",
+        "general": "GENERAL MEETING"
+    }
+    context = meeting_contexts.get(meeting_type, meeting_contexts["general"])
+    
+    return f"""You are an expert AI assistant specialized in analyzing meeting transcripts. Analyze the following {context} transcript and extract ALL relevant information with maximum accuracy.
+
+**CRITICAL INSTRUCTIONS:**
+1. **Action Items**: Extract with EXACT owner names from the transcript. Include priority, dependencies, and status.
+2. **Due Dates**: Look for dates, day names (Tuesday, next week), or time references (immediately, Q1, mid-November).
+3. **Key Decisions**: Extract firm decisions with rationale, impact, and who decided.
+4. **Attendees**: Extract ALL names mentioned in the transcript (speaker names, mentions).
+5. **Executive Summary**: Write 2-3 sentences summarizing the meeting's purpose and main outcomes.
+
+**Transcript:**
+{transcript}
+
+**RESPONSE FORMAT:**
+Return ONLY valid JSON with this EXACT structure (no markdown, no code blocks):
+{{
+  "executive_summary": "A comprehensive 2-3 sentence summary of the meeting",
+  "action_items": [
+    {{
+      "task": "Specific task description",
+      "owner": "Person's name from transcript",
+      "due_date": "Exact date or timeframe mentioned",
+      "priority": "High/Medium/Low",
+      "dependencies": "Any dependencies or None",
+      "status": "Not Started"
+    }}
+  ],
+  "key_decisions": [
+    {{
+      "decision": "The decision that was made",
+      "rationale": "Why this decision was made",
+      "impact": "High/Medium/Low impact",
+      "decided_by": "Person or group who decided"
+    }}
+  ],
+  "attendees_mentioned": ["Name1", "Name2", "Name3"],
+  "discussion_points": [
+    {{
+      "topic": "Discussion topic",
+      "summary": "Brief summary of discussion",
+      "outcome": "What was concluded or decided",
+      "participants": ["Name1", "Name2"]
+    }}
+  ],
+  "blockers_and_risks": [
+    {{
+      "issue": "Description of blocker or risk",
+      "severity": "High/Medium/Low",
+      "affected_areas": ["Area1", "Area2"],
+      "mitigation": "Mitigation plan or null"
+    }}
+  ],
+  "new_requirements": [
+    {{
+      "requirement": "The new requirement",
+      "source": "Who requested it or where it came from",
+      "priority": "High/Medium/Low",
+      "estimated_effort": "Effort estimate or Unknown"
+    }}
+  ],
+  "questions_raised": [
+    {{
+      "question": "What was asked?",
+      "asked_by": "Name",
+      "needs_answer_from": "Who should answer or null"
+    }}
+  ],
+  "next_steps": ["Step 1", "Step 2"],
+  "red_flags": ["Any concerning issues mentioned"],
+  "context_for_absentees": "What people who missed the meeting should know"
+}}
+
+**IMPORTANT**: Extract ACTUAL names, dates, and details from the transcript. Do NOT use "Unassigned" or "N/A" if the information exists in the transcript.
+"""
+
+
 # ---------------------- Meeting Classification ----------------------
 
 def classify_meeting_type(transcript: str, model_name: str) -> str:
-    """Classify meeting type using Ollama"""
+    """Classify meeting type using Gemini or Ollama"""
     transcript_clean = clean_transcript(transcript)
     classification_prompt = f"""
 Analyze this meeting transcript and classify it into ONE of these categories:
@@ -199,71 +347,125 @@ Transcript preview (first 1000 characters):
 Respond with ONLY ONE WORD - the category name.
 """
     try:
-        client = ollama.Client(host="http://localhost:11434")
-        response = client.generate(
-            model=model_name,
-            prompt=classification_prompt,
-            stream=False,
-            options={"temperature": 0.1, "num_predict": 20}
-        )
-        raw = response.get("response", "").strip().lower()
+        raw = _get_llm_response(classification_prompt, temperature=0.1, model_name=model_name).strip().lower()
         for valid in ["standup", "planning", "retro", "client_call", "general"]:
             if valid in raw:
                 return valid
         return "general"
     except Exception as e:
-        print(f"Classification error: {e}")
+        logging.error(f"Classification error: {e}")
         return "general"
 
 
 # ---------------------- Core Summary Functions ----------------------
 
 def generate_summary(model_name: str, transcript: str, meeting_type: str = "general") -> dict:
-    """Generate meeting summary"""
-    meeting_contexts = {
-        "standup": "DAILY STANDUP: Focus on accomplishments, plans, blockers, and velocity.",
-        "planning": "SPRINT PLANNING: Focus on commitments, estimates, dependencies, and goals.",
-        "retro": "RETROSPECTIVE: Focus on what went well, improvements, action items, morale.",
-        "client_call": "CLIENT CALL: Focus on requirements, feedback, timelines, and next steps.",
-        "general": "GENERAL MEETING: Extract all key discussion points and outcomes."
-    }
-    context = meeting_contexts.get(meeting_type, meeting_contexts["general"])
-    prompt = f"""
-You are an expert AI assistant. Create a comprehensive meeting summary in structured JSON.
-{context}
-
-Transcript:
-{transcript}
-
-Return ONLY valid JSON starting with {{ and ending with }}.
-"""
+    """Generate meeting summary using Gemini or Ollama"""
+    prompt = get_summary_prompt(transcript, meeting_type)
+    
     try:
-        client = ollama.Client(host="http://localhost:11434")
-        response = client.generate(
-            model=model_name,
-            prompt=prompt,
-            stream=False,
-            options={"temperature": 0.3, "num_predict": 8192, "top_p": 0.9}
-        )
-        parsed = safe_json_parse(response.get("response", ""))
+        response_text = _get_llm_response(prompt, temperature=0.3, model_name=model_name)
+        parsed = safe_json_parse(response_text)
         normalized = normalize_summary_fields(parsed)
         return _validate_and_fill_defaults(normalized, meeting_type)
     except Exception as e:
+        logging.error(f"Summary generation error: {e}")
         return _create_fallback_summary(transcript, meeting_type, str(e))
 
 
 def _validate_and_fill_defaults(data: Dict[str, Any], meeting_type: str) -> Dict[str, Any]:
-    """Ensure schema completeness"""
+    """Ensure schema completeness and add missing fields"""
+    
+    # Ensure action_items have all required fields
+    action_items = data.get("action_items", [])
+    for item in action_items:
+        if isinstance(item, dict):
+            item.setdefault("task", "")
+            item.setdefault("owner", "Unassigned")
+            item.setdefault("due_date", "Not specified")
+            item.setdefault("priority", "Medium")
+            item.setdefault("dependencies", "None")
+            item.setdefault("status", "Not Started")
+    
+    # Ensure key_decisions have all required fields
+    key_decisions = data.get("key_decisions", [])
+    for item in key_decisions:
+        if isinstance(item, dict):
+            item.setdefault("decision", "")
+            item.setdefault("rationale", "Not specified")
+            item.setdefault("impact", "Medium")
+            item.setdefault("decided_by", "Team")
+    
+    # Ensure discussion_points have all required fields
+    discussion_points = data.get("discussion_points", [])
+    for item in discussion_points:
+        if isinstance(item, dict):
+            item.setdefault("topic", "")
+            item.setdefault("summary", "")
+            item.setdefault("outcome", "Discussed")
+            item.setdefault("participants", [])
+    
+    # Ensure blockers_and_risks have all required fields
+    blockers = data.get("blockers_and_risks", [])
+    for item in blockers:
+        if isinstance(item, dict):
+            item.setdefault("issue", "")
+            item.setdefault("severity", "Medium")
+            item.setdefault("affected_areas", [])
+            item.setdefault("mitigation", None)
+    
+    # Ensure new_requirements have all required fields
+    requirements = data.get("new_requirements", [])
+    for item in requirements:
+        if isinstance(item, dict):
+            item.setdefault("requirement", "")
+            item.setdefault("source", "Not specified")
+            item.setdefault("priority", "Medium")
+            item.setdefault("estimated_effort", "Unknown")
+    
+    # Ensure questions_raised have all required fields
+    questions = data.get("questions_raised", [])
+    for item in questions:
+        if isinstance(item, dict):
+            item.setdefault("question", "")
+            item.setdefault("asked_by", None)
+            item.setdefault("needs_answer_from", None)
+    
+    # Generate follow_up_needed from action items
+    if not data.get("follow_up_needed"):
+        immediate_tasks, this_week_tasks, later_tasks = [], [], []
+        for item in action_items:
+            if isinstance(item, dict):
+                task_desc = item.get("task", "")
+                owner = item.get("owner", "")
+                due_date = item.get("due_date", "").lower()
+                priority = item.get("priority", "").lower()
+                
+                task_string = f"{owner}: {task_desc}"
+                if "immediate" in due_date or "today" in due_date or "high" in priority:
+                    immediate_tasks.append(task_string)
+                elif "this week" in due_date or "next week" in due_date or any(day in due_date for day in ["monday", "tuesday", "wednesday", "thursday", "friday"]):
+                    this_week_tasks.append(task_string)
+                else:
+                    later_tasks.append(task_string)
+        
+        data["follow_up_needed"] = {
+            "immediate": immediate_tasks,
+            "this_week": this_week_tasks,
+            "later": later_tasks
+        }
+    
+    # Set default values for top-level fields
     defaults = {
         "meeting_type": meeting_type,
         "meeting_date": datetime.now().strftime('%Y-%m-%d'),
         "executive_summary": data.get("executive_summary", "Meeting summary generated"),
-        "key_decisions": data.get("key_decisions", []),
-        "action_items": data.get("action_items", []),
-        "discussion_points": data.get("discussion_points", []),
-        "blockers_and_risks": data.get("blockers_and_risks", []),
-        "new_requirements": data.get("new_requirements", []),
-        "questions_raised": data.get("questions_raised", []),
+        "key_decisions": key_decisions,
+        "action_items": action_items,
+        "discussion_points": discussion_points,
+        "blockers_and_risks": blockers,
+        "new_requirements": requirements,
+        "questions_raised": questions,
         "metrics_mentioned": data.get("metrics_mentioned", {"velocity": None, "burndown": None, "completion_rate": None, "other": {}}),
         "next_steps": data.get("next_steps", []),
         "attendees_mentioned": data.get("attendees_mentioned", []),
@@ -272,8 +474,10 @@ def _validate_and_fill_defaults(data: Dict[str, Any], meeting_type: str) -> Dict
         "sentiment_analysis": data.get("sentiment_analysis", {"overall_mood": "Neutral", "concerns_level": "Medium", "team_confidence": "Moderate"}),
         "red_flags": data.get("red_flags", [])
     }
+    
     for k, v in defaults.items():
         data.setdefault(k, v)
+    
     return data
 
 

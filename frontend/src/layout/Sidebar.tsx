@@ -8,7 +8,7 @@ export default function Sidebar() {
         {
             label: "Dashboard",
             icon: LayoutDashboard,
-            to: "/",
+            to: "/dashboard",
         },
 
         {

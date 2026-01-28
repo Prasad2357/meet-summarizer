@@ -100,7 +100,7 @@ class MeetingRecordResponse(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class MeetingRecordListResponse(BaseModel):
@@ -114,7 +114,7 @@ class MeetingRecordListResponse(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class PaginatedMeetingRecordResponse(BaseModel):
     items: List[MeetingRecordListResponse]
@@ -138,4 +138,4 @@ class UserResponse(UserBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True

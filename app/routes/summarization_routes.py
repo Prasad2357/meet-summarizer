@@ -206,19 +206,19 @@ def get_statistics(
     meetings_with_red_flags = query.filter(MeetingRecord.has_red_flags == True).count()
     
     # Total action items across all meetings for this user
-    total_action_items = db.query(func.sum(MeetingRecord.action_items_count)).filter(MeetingRecord.user_id == user_id).scalar() or 0
+    total_action_items = db.query(func.sum(MeetingRecord.action_items_count)).filter(MeetingRecord.user_id == current_user.id).scalar() or 0
     
     # Meeting type distribution for this user
     meeting_types = db.query(
         MeetingRecord.meeting_type,
         func.count(MeetingRecord.id)
-    ).filter(MeetingRecord.user_id == user_id).group_by(MeetingRecord.meeting_type).all()
+    ).filter(MeetingRecord.user_id == current_user.id).group_by(MeetingRecord.meeting_type).all()
     
     # Recent meetings (last 7 days) for this user
     from datetime import datetime, timedelta
     week_ago = datetime.now() - timedelta(days=7)
     recent_meetings = db.query(MeetingRecord).filter(
-        MeetingRecord.user_id == user_id,
+        MeetingRecord.user_id == current_user.id,
         MeetingRecord.created_at >= week_ago
     ).count()
     
@@ -267,7 +267,7 @@ def get_stats_by_type(
 @router.delete("/{record_id}")
 def delete_record(
     record_id: int, 
-    user_id: int = Query(..., description="User ID is required"),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -275,7 +275,7 @@ def delete_record(
     """
     record = db.query(MeetingRecord).filter(
         MeetingRecord.id == record_id,
-        MeetingRecord.user_id == user_id
+        MeetingRecord.user_id == current_user.id
     ).first()
     if not record:
         raise HTTPException(status_code=404, detail=f"Meeting record {record_id} not found for this user")
