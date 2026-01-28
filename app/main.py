@@ -1,3 +1,4 @@
+import logging
 from fastapi import FastAPI
 from app.routes import transcription_routes, summarization_routes, user_routes
 from app.database import Base, engine
@@ -5,6 +6,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.models import User  # IMPORTANT: ensure User is imported
 from app.models import Base
 from sqlalchemy import create_engine
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,  # Set to DEBUG to see all logs (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+# Silence noisy third-party loggers
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 # Create DB tables
 Base.metadata.create_all(bind=engine)

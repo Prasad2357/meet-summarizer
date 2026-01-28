@@ -4,7 +4,7 @@ import AuthForm from '@/components/AuthForm';
 import '@/styles/LandingPage.css';
 
 const LandingPage = () => {
-    const [isLogin, setIsLogin] = useState(false);
+    const [isLogin, setIsLogin] = useState(true);
 
     return (
         <div className="landing-page">

@@ -40,7 +40,11 @@ def signup(payload: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
-    token = create_access_token({"sub": str(user.id)})
+    token = create_access_token({
+        "sub": str(user.id),
+        "email": user.email,
+        "name": user.name
+    })
 
     return {"access_token": token, "token_type": "bearer"}
 
@@ -51,7 +55,11 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = create_access_token({"sub": str(user.id)})
+    token = create_access_token({
+        "sub": str(user.id),
+        "email": user.email,
+        "name": user.name
+    })
 
     return {"access_token": token, "token_type": "bearer"}
 
