@@ -43,6 +43,20 @@ export async function fetchMeetingById(id: string) {
   return res.json()
 }
 
+export async function fetchMeetingStatus(id: number) {
+  const res = await fetch(
+    `${API_BASE_URL}/records/${id}/`,
+    {
+      headers: getAuthHeaders(),
+    }
+  )
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch meeting status")
+  }
+  return res.json()
+}
+
 export async function uploadAudio(file: File) {
   const token = localStorage.getItem("access_token");
   const formData = new FormData()

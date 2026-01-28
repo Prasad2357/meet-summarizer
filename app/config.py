@@ -10,7 +10,7 @@ UPLOAD_DIR = "uploads"
 
 # ---------------------- LLM Configuration ----------------------
 # Gemini API Configuration
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyCzBzplQjA7trv1byYfZsEu_UOKDTOYPZk")  # Set this in .env file or environment
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")  # Set this in .env file or environment
 USE_GEMINI = os.getenv("USE_GEMINI", "true").lower() == "true"  # Set to "false" to use Ollama
 
 # Gemini Models (Recommended: gemini-1.5-flash for speed, gemini-1.5-pro for quality)
