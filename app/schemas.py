@@ -97,6 +97,7 @@ class MeetingRecordResponse(BaseModel):
     summary_json: EnhancedSummary
     meeting_type: str
     status: str
+    progress: int
     created_at: datetime
 
     class Config:
@@ -108,6 +109,7 @@ class MeetingRecordListResponse(BaseModel):
     file_name: str
     meeting_type: str
     status: str
+    progress: int
     executive_summary: str
     action_items_count: int
     blockers_count: int

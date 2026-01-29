@@ -1,8 +1,16 @@
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
-import { Outlet } from "react-router-dom";
+import { Outlet, Navigate } from "react-router-dom";
+import { useAuthStore } from "../state/authStore";
 
 export default function AppLayout() {
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+    // Redirect to landing page if not authenticated
+    if (!isAuthenticated) {
+        return <Navigate to="/" replace />;
+    }
+
     return (
         <div className="flex h-screen overflow-hidden">
             <Sidebar />

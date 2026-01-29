@@ -55,17 +55,51 @@ def _deduplicate_list_by_key(items: List[dict], key_func, threshold: int = 90) -
 
 
 def safe_json_parse(model_output: str) -> dict:
-    """Extract JSON from LLM output safely"""
+    """Extract JSON from LLM output safely with multiple strategies"""
     cleaned = model_output.strip()
+    
+    # Remove markdown code blocks
     cleaned = re.sub(r'^```json\s*', '', cleaned)
     cleaned = re.sub(r'^```\s*', '', cleaned)
     cleaned = re.sub(r'\s*```$', '', cleaned)
-    json_start, json_end = cleaned.find("{"), cleaned.rfind("}") + 1
+    
+    # Strategy 1: Find complete JSON object
+    json_start = cleaned.find("{")
+    json_end = cleaned.rfind("}") + 1
+    
     if json_start == -1 or json_end == 0:
+        logging.warning("No JSON object found in model output")
+        logging.debug(f"Model output preview: {model_output[:300]}")
         return {}
+    
+    json_str = cleaned[json_start:json_end]
+    
+    # Try parsing
     try:
-        return json.loads(cleaned[json_start:json_end])
-    except json.JSONDecodeError:
+        parsed = json.loads(json_str)
+        logging.info(f"Successfully parsed JSON with {len(parsed)} top-level keys")
+        return parsed
+    except json.JSONDecodeError as e:
+        logging.error(f"JSON parsing error: {e}")
+        logging.debug(f"Failed JSON preview: {json_str[:500]}")
+        
+        # Strategy 2: Try to fix common issues (truncated responses)
+        # If JSON is incomplete, try to close it properly
+        try:
+            # Count braces to see if we need to close
+            open_braces = json_str.count("{")
+            close_braces = json_str.count("}")
+            
+            if open_braces > close_braces:
+                # Add missing closing braces
+                json_str += "}" * (open_braces - close_braces)
+                parsed = json.loads(json_str)
+                logging.info(f"Successfully parsed JSON after adding {open_braces - close_braces} closing braces")
+                return parsed
+        except json.JSONDecodeError:
+            pass
+        
+        logging.warning("All JSON parsing strategies failed")
         return {}
 
 # ---------------------- Normalization ----------------------
@@ -188,22 +222,39 @@ def normalize_summary_fields(summary: dict) -> dict:
 
 # ---------------------- LLM Helper Functions ----------------------
 
-def _call_gemini(prompt: str, temperature: float = 0.3) -> str:
-    """Call Gemini API with error handling using new google-genai SDK"""
-    try:
-        client = genai.Client(api_key=GEMINI_API_KEY)
-        response = client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=prompt,
-            config={
-                'temperature': temperature,
-                'max_output_tokens': 8192,
-            }
-        )
-        return response.text
-    except Exception as e:
-        logging.error(f"Gemini API error: {str(e)}")
-        raise
+def _call_gemini(prompt: str, temperature: float = 0.3, max_retries: int = 3) -> str:
+    """Call Gemini API with error handling and retry logic"""
+    import time
+    
+    for attempt in range(max_retries):
+        try:
+            client = genai.Client(api_key=GEMINI_API_KEY)
+            response = client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=prompt,
+                config={
+                    'temperature': temperature,
+                    'max_output_tokens': 16384,  # Increased from 8192 to prevent truncation
+                }
+            )
+            response_text = response.text
+            logging.info(f"Gemini API response received ({len(response_text)} characters) on attempt {attempt + 1}")
+            
+            # Check if response seems complete
+            if not response_text.rstrip().endswith('}'):
+                logging.warning(f"Response may be truncated - doesn't end with '}}': ...{response_text[-100:]}")
+            
+            logging.debug(f"Gemini response preview: {response_text[:500]}...")
+            return response_text
+        except Exception as e:
+            logging.error(f"Gemini API error on attempt {attempt + 1}/{max_retries}: {str(e)}")
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                logging.info(f"Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+            else:
+                logging.exception("All Gemini retry attempts failed:")
+                raise
 
 
 def _call_ollama(model_name: str, prompt: str, temperature: float = 0.3, max_tokens: int = 8192) -> str:
@@ -253,79 +304,40 @@ def get_summary_prompt(transcript: str, meeting_type: str) -> str:
     }
     context = meeting_contexts.get(meeting_type, meeting_contexts["general"])
     
-    return f"""You are an expert AI assistant specialized in analyzing meeting transcripts. Analyze the following {context} transcript and extract ALL relevant information with maximum accuracy.
-
-**CRITICAL INSTRUCTIONS:**
-1. **Action Items**: Extract with EXACT owner names from the transcript. Include priority, dependencies, and status.
-2. **Due Dates**: Look for dates, day names (Tuesday, next week), or time references (immediately, Q1, mid-November).
-3. **Key Decisions**: Extract firm decisions with rationale, impact, and who decided.
-4. **Attendees**: Extract ALL names mentioned in the transcript (speaker names, mentions).
-5. **Executive Summary**: Write 2-3 sentences summarizing the meeting's purpose and main outcomes.
+    return f"""You are an expert meeting analyst. Analyze this {context} transcript and extract key information as valid JSON.
 
 **Transcript:**
 {transcript}
 
-**RESPONSE FORMAT:**
-Return ONLY valid JSON with this EXACT structure (no markdown, no code blocks):
+**CRITICAL: Return ONLY valid JSON (no markdown, no code blocks). Use this EXACT structure:**
+
 {{
-  "executive_summary": "A comprehensive 2-3 sentence summary of the meeting",
+  "executive_summary": "2-3 sentence summary",
   "action_items": [
-    {{
-      "task": "Specific task description",
-      "owner": "Person's name from transcript",
-      "due_date": "Exact date or timeframe mentioned",
-      "priority": "High/Medium/Low",
-      "dependencies": "Any dependencies or None",
-      "status": "Not Started"
-    }}
+    {{"task": "description", "owner": "name", "due_date": "date/timeframe", "priority": "High/Medium/Low", "dependencies": "text or None", "status": "Not Started"}}
   ],
   "key_decisions": [
-    {{
-      "decision": "The decision that was made",
-      "rationale": "Why this decision was made",
-      "impact": "High/Medium/Low impact",
-      "decided_by": "Person or group who decided"
-    }}
+    {{"decision": "what", "rationale": "why", "impact": "High/Medium/Low", "decided_by": "who"}}
   ],
-  "attendees_mentioned": ["Name1", "Name2", "Name3"],
+  "attendees_mentioned": ["Name1", "Name2"],
   "discussion_points": [
-    {{
-      "topic": "Discussion topic",
-      "summary": "Brief summary of discussion",
-      "outcome": "What was concluded or decided",
-      "participants": ["Name1", "Name2"]
-    }}
+    {{"topic": "subject", "summary": "brief", "outcome": "result", "participants": ["names"]}}
   ],
   "blockers_and_risks": [
-    {{
-      "issue": "Description of blocker or risk",
-      "severity": "High/Medium/Low",
-      "affected_areas": ["Area1", "Area2"],
-      "mitigation": "Mitigation plan or null"
-    }}
+    {{"issue": "what", "severity": "High/Medium/Low", "affected_areas": ["area"], "mitigation": "plan or null"}}
   ],
   "new_requirements": [
-    {{
-      "requirement": "The new requirement",
-      "source": "Who requested it or where it came from",
-      "priority": "High/Medium/Low",
-      "estimated_effort": "Effort estimate or Unknown"
-    }}
+    {{"requirement": "what", "source": "who/where", "priority": "High/Medium/Low", "estimated_effort": "estimate or Unknown"}}
   ],
   "questions_raised": [
-    {{
-      "question": "What was asked?",
-      "asked_by": "Name",
-      "needs_answer_from": "Who should answer or null"
-    }}
+    {{"question": "what", "asked_by": "name or null", "needs_answer_from": "name or null"}}
   ],
-  "next_steps": ["Step 1", "Step 2"],
-  "red_flags": ["Any concerning issues mentioned"],
-  "context_for_absentees": "What people who missed the meeting should know"
+  "next_steps": ["step1", "step2"],
+  "red_flags": ["concern1"],
+  "context_for_absentees": "summary for those who missed"
 }}
 
-**IMPORTANT**: Extract ACTUAL names, dates, and details from the transcript. Do NOT use "Unassigned" or "N/A" if the information exists in the transcript.
-"""
+**Extract actual names, dates, and details from the transcript. Be thorough but concise.**"""
 
 
 # ---------------------- Meeting Classification ----------------------
@@ -364,12 +376,24 @@ def generate_summary(model_name: str, transcript: str, meeting_type: str = "gene
     prompt = get_summary_prompt(transcript, meeting_type)
     
     try:
+        logging.info(f"Generating summary for {meeting_type} meeting ({len(transcript)} chars)")
         response_text = _get_llm_response(prompt, temperature=0.3, model_name=model_name)
+        logging.info("LLM response received, parsing JSON...")
         parsed = safe_json_parse(response_text)
+        
+        if not parsed or len(parsed) == 0:
+            logging.warning("Empty or invalid JSON from LLM, using fallback")
+            return _create_fallback_summary(transcript, meeting_type, "LLM returned empty/invalid JSON")
+        
+        logging.info("JSON parsed successfully, normalizing fields...")
         normalized = normalize_summary_fields(parsed)
-        return _validate_and_fill_defaults(normalized, meeting_type)
+        logging.info("Fields normalized, validating and filling defaults...")
+        result = _validate_and_fill_defaults(normalized, meeting_type)
+        logging.info("Summary generation completed successfully")
+        return result
     except Exception as e:
         logging.error(f"Summary generation error: {e}")
+        logging.exception("Full error traceback:")
         return _create_fallback_summary(transcript, meeting_type, str(e))
 
 
@@ -490,10 +514,28 @@ def _create_fallback_summary(transcript: str, meeting_type: str, error_msg: str)
         "meeting_date": datetime.now().strftime('%Y-%m-%d'),
         "executive_summary": f"A {meeting_type} meeting was held. Transcript has ~{len(words)} words. Full analysis could not be completed automatically.",
         "key_decisions": [],
-        "action_items": [{"task": "Review transcript for details", "owner": "Unassigned", "due_date": "Not specified", "priority": "High"}],
-        "discussion_points": [{"topic": "Various topics discussed", "summary": "Manual review needed", "participants": attendees}],
+        "action_items": [{
+            "task": "Review transcript for details", 
+            "owner": "Unassigned", 
+            "due_date": "Not specified", 
+            "priority": "High",
+            "dependencies": "None",
+            "status": "Not Started"
+        }],
+        "discussion_points": [{
+            "topic": "Various topics discussed", 
+            "summary": "Manual review needed", 
+            "outcome": "Requires manual review",
+            "participants": attendees
+        }],
+        "blockers_and_risks": [],
+        "new_requirements": [],
+        "questions_raised": [],
+        "metrics_mentioned": {"velocity": None, "burndown": None, "completion_rate": None, "other": {}},
+        "next_steps": [],
         "attendees_mentioned": attendees,
         "follow_up_needed": {"immediate": ["Review meeting manually"], "this_week": [], "later": []},
+        "context_for_absentees": "Full meeting context available in transcript",
         "sentiment_analysis": {"overall_mood": "Unknown", "concerns_level": "Unknown", "team_confidence": "Unknown"},
         "red_flags": [f"Automated analysis failed: {error_msg[:150]}"],
         "error_details": {"error": "LLM processing error", "message": error_msg[:200]}

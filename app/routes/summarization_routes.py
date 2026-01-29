@@ -49,6 +49,7 @@ def get_all_records(
             "file_name": r.file_name,
             "meeting_type": r.meeting_type,
             "status": r.status,
+            "progress": r.progress,
             "executive_summary": summary.get("executive_summary", "No summary available"),
             "action_items_count": r.action_items_count,
             "blockers_count": len(summary.get("blockers_and_risks", [])),

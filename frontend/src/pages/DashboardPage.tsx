@@ -32,6 +32,40 @@ export default function DashboardPage() {
             .finally(() => setLoading(false));
     }, [page]);
 
+    // Polling effect for processing meetings
+    useEffect(() => {
+        const processingMeetings = meetings.filter(
+            m => m.status === "PENDING" || m.status === "PROCESSING"
+        );
+
+        if (processingMeetings.length === 0) {
+            return; // No polling needed
+        }
+
+        console.log(`Polling ${processingMeetings.length} processing meetings...`);
+
+        const pollInterval = setInterval(async () => {
+            // Fetch updated data for all meetings to get latest status/progress
+            try {
+                const data = await fetchMeetings(PAGE_SIZE, (page - 1) * PAGE_SIZE);
+                const items = data.items ?? data;
+                setMeetings(items);
+                setTotal(data.total ?? items.length);
+
+                // Log progress for debugging
+                items.forEach((m: any) => {
+                    if (m.status === "PENDING" || m.status === "PROCESSING") {
+                        console.log(`Meeting ${m.id}: ${m.status} - ${m.progress}%`);
+                    }
+                });
+            } catch (error) {
+                console.error("Polling error:", error);
+            }
+        }, 2000); // Poll every 2 seconds
+
+        return () => clearInterval(pollInterval);
+    }, [meetings, page]);
+
 
     if (loading) {
         return <p className="p-8 text-muted-foreground">Loading meetings...</p>
@@ -65,6 +99,8 @@ export default function DashboardPage() {
                             date={new Date(meeting.created_at).toDateString()}
                             tags={[meeting.meeting_type]}
                             summary={meeting.executive_summary}
+                            status={meeting.status}
+                            progress={meeting.progress}
                         />
                     </Link>
                 ))}

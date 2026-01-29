@@ -18,6 +18,7 @@ class MeetingRecord(Base):
     has_red_flags = Column(Boolean, default=False, index=True)    # Quick filter for critical issues
     action_items_count = Column(Integer, default=0)               # Count for quick stats
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())  # Track when summaries are regenerated
+    progress = Column(Integer, default=0)                         # Processing progress percentage (0-100)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     source_type = Column(String, default="text")     # audio, text
 
