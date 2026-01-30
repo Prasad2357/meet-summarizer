@@ -1,4 +1,5 @@
 import MeetingCard from "../components/meeting/MeetingCard";
+import MeetingListRow from "../components/meeting/MeetingListRow";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import type { MeetingListItem } from "../types/meeting";
@@ -14,6 +15,7 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [open, setOpen] = useState(false)
+    const [view, setView] = useState<'grid' | 'list'>('grid')
     const PAGE_SIZE = 12;
     const [page, setPage] = useState(1);
 
@@ -82,30 +84,112 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">Dashboard</h1>
 
-                <Button onClick={() => setOpen(true)}>
-                    New Meeting Analysis
-                </Button>
+                <div className="flex items-center gap-3">
+                    {/* View Toggle */}
+                    <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                        <button
+                            onClick={() => setView('grid')}
+                            className={`px-3 py-2 transition-all ${view === 'grid'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-white text-gray-600 hover:bg-gray-50'
+                                }`}
+                            title="Grid View"
+                        >
+                            <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                            >
+                                <rect x="3" y="3" width="7" height="7" />
+                                <rect x="14" y="3" width="7" height="7" />
+                                <rect x="14" y="14" width="7" height="7" />
+                                <rect x="3" y="14" width="7" height="7" />
+                            </svg>
+                        </button>
+                        <button
+                            onClick={() => setView('list')}
+                            className={`px-3 py-2 transition-all ${view === 'list'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-white text-gray-600 hover:bg-gray-50'
+                                }`}
+                            title="List View"
+                        >
+                            <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                            >
+                                <line x1="3" y1="6" x2="21" y2="6" />
+                                <line x1="3" y1="12" x2="21" y2="12" />
+                                <line x1="3" y1="18" x2="21" y2="18" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <Button onClick={() => setOpen(true)}>
+                        New Meeting Analysis
+                    </Button>
+                </div>
             </div>
 
-            <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {meetings.map((meeting) => (
-                    <Link
-                        key={meeting.id}
-                        to={`/meetings/${meeting.id}`}
-                    >
-                        <MeetingCard
+
+            {/* Conditional rendering based on view */}
+            {view === 'grid' ? (
+                <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {meetings.map((meeting) => (
+                        <Link
                             key={meeting.id}
-                            title={meeting.file_name}
-                            date={new Date(meeting.created_at).toDateString()}
-                            tags={[meeting.meeting_type]}
-                            summary={meeting.executive_summary}
-                            status={meeting.status}
-                            progress={meeting.progress}
-                        />
-                    </Link>
-                ))}
+                            to={`/meetings/${meeting.id}`}
+                        >
+                            <MeetingCard
+                                key={meeting.id}
+                                title={meeting.file_name}
+                                date={new Date(meeting.created_at).toDateString()}
+                                tags={[meeting.meeting_type]}
+                                summary={meeting.executive_summary}
+                                status={meeting.status}
+                                progress={meeting.progress}
+                            />
+                        </Link>
+                    ))}
+                </div>
+            ) : (
+                <div className="p-8">
+                    {/* List View Table Headers */}
+                    <div className="grid grid-cols-[2fr_1fr_1fr_3fr] gap-4 px-6 py-3 mb-2 font-semibold text-sm text-gray-600 border-b-2 border-gray-200">
+                        <div>Meeting Title</div>
+                        <div>Date</div>
+                        <div>Category</div>
+                        <div>Summary</div>
+                    </div>
 
-            </div>
+                    {/* List View Rows */}
+                    <div className="space-y-0">
+                        {meetings.map((meeting) => (
+                            <Link
+                                key={meeting.id}
+                                to={`/meetings/${meeting.id}`}
+                                style={{ textDecoration: 'none' }}
+                            >
+                                <MeetingListRow
+                                    title={meeting.file_name}
+                                    date={new Date(meeting.created_at).toDateString()}
+                                    category={meeting.meeting_type}
+                                    summary={meeting.executive_summary}
+                                    status={meeting.status}
+                                    progress={meeting.progress}
+                                />
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Modal */}
             <NewAnalysisModal
