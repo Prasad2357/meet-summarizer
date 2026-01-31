@@ -190,3 +190,18 @@ export async function login(email: string, password: string) {
   return res.json();
 }
 
+export async function deleteMeeting(id: number) {
+  const res = await fetch(
+    `${API_BASE_URL}/records/${id}`,
+    {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to delete meeting");
+  }
+  return res.json();
+}
+
