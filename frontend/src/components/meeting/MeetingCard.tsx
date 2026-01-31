@@ -1,21 +1,25 @@
 import './MeetingCard.css';
 
 type MeetingCardProps = {
+  id: number
   title: string
   date: string
   tags: string[]
   summary: string
   status?: string
   progress?: number
+  onDelete?: (id: number) => void
 }
 
 export default function MeetingCard({
+  id,
   title,
   date,
   tags,
   summary,
   status = "DONE",
   progress = 100,
+  onDelete,
 }: MeetingCardProps) {
   const isProcessing = status === "PENDING" || status === "PROCESSING"
   const isFailed = status === "FAILED"
@@ -28,9 +32,53 @@ export default function MeetingCard({
       <div
         className={`meeting-card ${isProcessing ? 'processing' : ''} ${isFailed ? 'failed' : ''}`}
         style={{
-          ['--progress' as any]: `${progressPercentage}%`
+          ['--progress' as any]: `${progressPercentage}%`,
+          position: 'relative'
         }}
       >
+        {/* Delete Button */}
+        {onDelete && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (confirm('Are you sure you want to delete this meeting?')) {
+                onDelete(id);
+              }
+            }}
+            className="delete-button"
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              background: '#ef4444',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              zIndex: 10,
+              opacity: 0.8,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = '1';
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = '0.8';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+            title="Delete meeting"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+              <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" />
+            </svg>
+          </button>
+        )}
+
         <div className="meeting-card-content">
           {/* Title */}
           <h3 className="text-lg font-semibold" style={{

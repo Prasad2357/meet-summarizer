@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import type { MeetingListItem } from "../types/meeting";
 import type { UploadResponse } from "../types/meeting";
-import { fetchMeetings } from "../lib/api";
+import { fetchMeetings, deleteMeeting } from "../lib/api";
 import NewAnalysisModal from "../components/new-analysis/NewAnalysisModal";
 import { Button } from "../components/ui/button";
 import Pagination from "../components/common/Pagination";
@@ -68,6 +68,20 @@ export default function DashboardPage() {
         return () => clearInterval(pollInterval);
     }, [meetings, page]);
 
+    // Delete handler
+    const handleDelete = async (id: number) => {
+        try {
+            await deleteMeeting(id);
+            // Refresh the meetings list after deletion
+            const data = await fetchMeetings(PAGE_SIZE, (page - 1) * PAGE_SIZE);
+            const items = data.items ?? data;
+            setMeetings(items);
+            setTotal(data.total ?? items.length);
+        } catch (err) {
+            console.error('Failed to delete meeting:', err);
+            setError('Failed to delete meeting');
+        }
+    };
 
     if (loading) {
         return <p className="p-8 text-muted-foreground">Loading meetings...</p>
@@ -148,13 +162,14 @@ export default function DashboardPage() {
                             to={`/meetings/${meeting.id}`}
                         >
                             <MeetingCard
-                                key={meeting.id}
+                                id={meeting.id}
                                 title={meeting.file_name}
                                 date={new Date(meeting.created_at).toDateString()}
                                 tags={[meeting.meeting_type]}
                                 summary={meeting.executive_summary}
                                 status={meeting.status}
                                 progress={meeting.progress}
+                                onDelete={handleDelete}
                             />
                         </Link>
                     ))}
@@ -162,11 +177,12 @@ export default function DashboardPage() {
             ) : (
                 <div className="p-8">
                     {/* List View Table Headers */}
-                    <div className="grid grid-cols-[2fr_1fr_1fr_3fr] gap-4 px-6 py-3 mb-2 font-semibold text-sm text-gray-600 border-b-2 border-gray-200">
+                    <div className="grid grid-cols-[2fr_1fr_1fr_3fr_auto] gap-4 px-6 py-3 mb-2 font-semibold text-sm text-gray-600 border-b-2 border-gray-200">
                         <div>Meeting Title</div>
                         <div>Date</div>
                         <div>Category</div>
                         <div>Summary</div>
+                        <div>Actions</div>
                     </div>
 
                     {/* List View Rows */}
@@ -178,12 +194,14 @@ export default function DashboardPage() {
                                 style={{ textDecoration: 'none' }}
                             >
                                 <MeetingListRow
+                                    id={meeting.id}
                                     title={meeting.file_name}
                                     date={new Date(meeting.created_at).toDateString()}
                                     category={meeting.meeting_type}
                                     summary={meeting.executive_summary}
                                     status={meeting.status}
                                     progress={meeting.progress}
+                                    onDelete={handleDelete}
                                 />
                             </Link>
                         ))}
