@@ -1,0 +1,89 @@
+/* Settings Page Styles */
+.settings-page {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Custom checkbox styling for better UX */
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 44px;
+    height: 24px;
+    background: #cbd5e1;
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+input[type="checkbox"]:checked {
+    background: #3b82f6;
+}
+
+input[type="checkbox"]::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input[type="checkbox"]:checked::before {
+    transform: translateX(20px);
+}
+
+/* Hover effects for select elements */
+select:hover {
+    border-color: #cbd5e1 !important;
+}
+
+select:focus {
+    outline: none;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Button hover effects */
+button {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+button:active {
+    transform: scale(0.98) !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .settings-page {
+        padding: 1rem !important;
+    }
+
+    .settings-page h1 {
+        font-size: 1.5rem !important;
+    }
+
+    .settings-section>div {
+        padding: 1.5rem !important;
+    }
+}

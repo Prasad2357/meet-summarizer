@@ -7,13 +7,18 @@ import MeetingDetailPage from "@/pages/MeetingDetailPage"
 import InsightsPage from "./pages/InsightsPage"
 import ActionItemsPage from "./pages/ActionItemsPage"
 import BlockersPage from "./pages/BlockersPage";
+import SettingsPage from "./pages/SettingsPage";
 import { useAuthStore } from "./state/authStore"
+import { useTheme } from "./hooks/useTheme"
 
 import AppLayout from "./layout/AppLayout"
 
 export default function App() {
   const checkAuth = useAuthStore((state) => state.checkAuth)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+
+  // Initialize theme on app mount
+  useTheme()
 
   // Check for existing auth token on app mount
   useEffect(() => {
@@ -59,6 +64,7 @@ export default function App() {
       {/* Protected Routes */}
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path="/meetings/:id" element={<MeetingDetailPage />} />
         {/* <Route path="/processing" element={<ProcessingPage />} /> */}
         <Route path="/insights" element={<InsightsPage />} />
