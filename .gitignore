@@ -3,7 +3,7 @@ venv/
 /venv/
 
 # Database file
-meeting_records.db
+meet_summarizer.db
 
 # Any other specific logs, caches, or compiled files:
 # Python cache

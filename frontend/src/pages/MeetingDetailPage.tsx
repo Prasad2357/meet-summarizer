@@ -1,11 +1,13 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { fetchMeetingById } from "../lib/api";
+import { fetchMeetingById, exportMeetingPDF } from "../lib/api";
 import type { MeetingDetail } from "../types/meeting";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ActionItemRow from "@/components/meeting/ActionItemRow"
 import type { ActionItem } from "../types/actionitem";
 import FollowUpList from "@/components/meeting/FollowUpList";
+import { Button } from "../components/ui/button";
+import { Download } from "lucide-react";
 
 
 export default function MeetingDetailPage() {
@@ -14,9 +16,9 @@ export default function MeetingDetailPage() {
   const [loading, setLoading] = useState(true)
   const actionItems: ActionItem[] = meeting?.summary_json.action_items ?? []
   const followUps = meeting?.summary_json.follow_up_needed
-  const immediate = followUps?.immediate ??[]
-  const thisWeek = followUps?.this_week ??[]
-  const later = followUps?.later ??[]
+  const immediate = followUps?.immediate ?? []
+  const thisWeek = followUps?.this_week ?? []
+  const later = followUps?.later ?? []
 
   useEffect(() => {
     async function loadMeeting() {
@@ -45,6 +47,7 @@ export default function MeetingDetailPage() {
   }
 
   const summary = meeting.summary_json
+
 
   return (
 
@@ -75,11 +78,37 @@ export default function MeetingDetailPage() {
         {/* RIGHT PANEL */}
         <div className="rounded-xl border bg-background p-4 overflow-y-auto">
           <Tabs defaultValue="summary" className="w-full">
-            <TabsList className="mb-4">
-              <TabsTrigger value="summary">Executive Summary</TabsTrigger>
-              <TabsTrigger value="actions">Action Items</TabsTrigger>
-              <TabsTrigger value="followups">Follow Ups</TabsTrigger>
-            </TabsList>
+            <div className="relative mb-4">
+              <TabsList>
+                <TabsTrigger value="summary">Executive Summary</TabsTrigger>
+                <TabsTrigger value="actions">Action Items</TabsTrigger>
+                <TabsTrigger value="followups">Follow Ups</TabsTrigger>
+              </TabsList>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8"
+                onClick={async () => {
+                  try {
+                    const blob = await exportMeetingPDF(id!);
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `meeting-${id}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                  } catch (error) {
+                    console.error("Failed to download PDF:", error);
+                  }
+                }}
+                disabled={loading}
+                title="Download PDF"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </div>
 
             <TabsContent value="summary">
               <p className="text-sm leading-relaxed">
@@ -115,7 +144,7 @@ export default function MeetingDetailPage() {
             </TabsContent>
           </Tabs>
 
-          {/* Tabs go here */}
+
         </div>
 
       </div>

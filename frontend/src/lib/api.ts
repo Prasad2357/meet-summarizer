@@ -205,3 +205,18 @@ export async function deleteMeeting(id: number) {
   return res.json();
 }
 
+export async function exportMeetingPDF(id: string) {
+  const res = await fetch(
+    `${API_BASE_URL}/records/${id}/export`,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to export meeting");
+  }
+  return res.blob();
+}
+
+
