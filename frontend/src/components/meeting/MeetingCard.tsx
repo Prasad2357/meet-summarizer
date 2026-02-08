@@ -85,7 +85,7 @@ export default function MeetingCard({
             fontSize: '1.125rem',
             fontWeight: 700,
             marginBottom: '0.375rem',
-            color: isProcessing ? '#475569' : '#0f172a',
+            color: isProcessing ? '#88a9d4ff' : '#888d9bff',
             transition: 'color 0.3s ease'
           }}>
             {title}

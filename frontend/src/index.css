@@ -117,7 +117,28 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Theme-aware utility classes */
+.theme-card {
+  background: oklch(var(--card));
+  color: oklch(var(--card-foreground));
+}
+
+.theme-bg {
+  background: oklch(var(--background));
+  color: oklch(var(--foreground));
+}
+
+.theme-muted-bg {
+  background: oklch(var(--muted));
+  color: oklch(var(--muted-foreground));
+}
+
+.theme-border {
+  border-color: oklch(var(--border));
 }
