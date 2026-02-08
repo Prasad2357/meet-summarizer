@@ -1,5 +1,5 @@
 import Sidebar from "./Sidebar";
-import TopBar from "./TopBar";
+import Topbar from "./Topbar";
 import { Outlet, Navigate } from "react-router-dom";
 import { useAuthStore } from "../state/authStore";
 
@@ -16,7 +16,7 @@ export default function AppLayout() {
             <Sidebar />
 
             <div className="flex flex-1 flex-col">
-                <TopBar />
+                <Topbar />
 
                 <main className="flex-1 overflow-auto">
                     <Outlet />
