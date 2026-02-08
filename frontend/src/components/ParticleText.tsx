@@ -17,7 +17,7 @@ const ParticleText = () => {
     const [isHovering, setIsHovering] = useState(false);
     const mousePos = useRef({ x: 0, y: 0 });
     const rotationAngle = useRef(0);
-    const animationFrameId = useRef<number | undefined>();
+    const animationFrameId = useRef<number | undefined>(undefined);
 
     useEffect(() => {
         const canvas = canvasRef.current;
