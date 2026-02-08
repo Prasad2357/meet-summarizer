@@ -1,3 +1,8 @@
+:root {
+  --card: 0.20 0 0;
+  --muted: 0.20 0 0;
+}
+
 .meeting-card-wrapper {
   position: relative;
   height: 100%;
@@ -25,45 +30,41 @@
   border-radius: 1rem;
   padding: 3px;
   /* Create the border effect using background positioned at edges */
-  background: 
+  background:
     /* Top border */
-    linear-gradient(to right, 
-      #6366f1 0%, 
-      #6366f1 calc(var(--progress) * 4), 
-      transparent calc(var(--progress) * 4), 
-      transparent 100%) 
-      top left / 100% 3px no-repeat,
-    
+    linear-gradient(to right,
+      #6366f1 0%,
+      #6366f1 calc(var(--progress) * 4),
+      transparent calc(var(--progress) * 4),
+      transparent 100%) top left / 100% 3px no-repeat,
+
     /* Right border - starts after top is complete (25%) */
-    linear-gradient(to bottom, 
-      #6366f1 0%, 
-      #6366f1 calc(max(0%, (var(--progress) - 25%) * 4)), 
-      transparent calc(max(0%, (var(--progress) - 25%) * 4)), 
-      transparent 100%) 
-      top right / 3px 100% no-repeat,
-    
+    linear-gradient(to bottom,
+      #6366f1 0%,
+      #6366f1 calc(max(0%, (var(--progress) - 25%) * 4)),
+      transparent calc(max(0%, (var(--progress) - 25%) * 4)),
+      transparent 100%) top right / 3px 100% no-repeat,
+
     /* Bottom border - starts after right is complete (50%) */
-    linear-gradient(to left, 
-      #6366f1 0%, 
-      #6366f1 calc(max(0%, (var(--progress) - 50%) * 4)), 
-      transparent calc(max(0%, (var(--progress) - 50%) * 4)), 
-      transparent 100%) 
-      bottom right / 100% 3px no-repeat,
-    
+    linear-gradient(to left,
+      #6366f1 0%,
+      #6366f1 calc(max(0%, (var(--progress) - 50%) * 4)),
+      transparent calc(max(0%, (var(--progress) - 50%) * 4)),
+      transparent 100%) bottom right / 100% 3px no-repeat,
+
     /* Left border - starts after bottom is complete (75%) */
-    linear-gradient(to top, 
-      #6366f1 0%, 
-      #6366f1 calc(max(0%, (var(--progress) - 75%) * 4)), 
-      transparent calc(max(0%, (var(--progress) - 75%) * 4)), 
-      transparent 100%) 
-      bottom left / 3px 100% no-repeat,
-    
+    linear-gradient(to top,
+      #6366f1 0%,
+      #6366f1 calc(max(0%, (var(--progress) - 75%) * 4)),
+      transparent calc(max(0%, (var(--progress) - 75%) * 4)),
+      transparent 100%) bottom left / 3px 100% no-repeat,
+
     /* Gray background border */
     linear-gradient(#e2e8f0, #e2e8f0) top left / 100% 3px no-repeat,
     linear-gradient(#e2e8f0, #e2e8f0) top right / 3px 100% no-repeat,
     linear-gradient(#e2e8f0, #e2e8f0) bottom right / 100% 3px no-repeat,
     linear-gradient(#e2e8f0, #e2e8f0) bottom left / 3px 100% no-repeat;
-  
+
   pointer-events: none;
   z-index: 0;
 }
@@ -93,7 +94,7 @@
 }
 
 .meeting-card.failed::before {
-  background: 
+  background:
     linear-gradient(#ef4444, #ef4444) top left / 100% 3px no-repeat,
     linear-gradient(#ef4444, #ef4444) top right / 3px 100% no-repeat,
     linear-gradient(#ef4444, #ef4444) bottom right / 100% 3px no-repeat,
@@ -102,27 +103,36 @@
 }
 
 @keyframes borderGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.6));
   }
+
   50% {
     filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.8));
   }
 }
 
 @keyframes cardGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0;
   }
+
   50% {
     opacity: 0.3;
   }
 }
 
 @keyframes errorPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.7;
   }
@@ -179,9 +189,12 @@
 }
 
 @keyframes badgePulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.85;
   }
@@ -203,8 +216,13 @@
 }
 
 @keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Enhanced text styling */
@@ -224,4 +242,60 @@
 .meeting-card.processing {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
   backdrop-filter: blur(10px);
+}
+
+/* Dark mode styles */
+.dark .meeting-card {
+  background: linear-gradient(135deg, oklch(var(--card)) 0%, oklch(var(--muted)) 100%);
+  box-shadow: 0 4px 6px -1px rgba(153, 138, 138, 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+}
+
+.dark .meeting-card h3 {
+  color: oklch(var(--card-foreground));
+}
+
+.dark .meeting-card .text-muted-foreground {
+  color: oklch(var(--muted-foreground));
+}
+
+.dark .meeting-card.processing {
+  background: linear-gradient(135deg, oklch(var(--card)) 0%, oklch(var(--muted)) 100%);
+  backdrop-filter: blur(10px);
+}
+
+.dark .meeting-card::before {
+  background:
+    /* Top border */
+    linear-gradient(to right,
+      #6366f1 0%,
+      #6366f1 calc(var(--progress) * 4),
+      transparent calc(var(--progress) * 4),
+      transparent 100%) top left / 100% 3px no-repeat,
+
+    /* Right border - starts after top is complete (25%) */
+    linear-gradient(to bottom,
+      #6366f1 0%,
+      #6366f1 calc(max(0%, (var(--progress) - 25%) * 4)),
+      transparent calc(max(0%, (var(--progress) - 25%) * 4)),
+      transparent 100%) top right / 3px 100% no-repeat,
+
+    /* Bottom border - starts after right is complete (50%) */
+    linear-gradient(to left,
+      #6366f1 0%,
+      #6366f1 calc(max(0%, (var(--progress) - 50%) * 4)),
+      transparent calc(max(0%, (var(--progress) - 50%) * 4)),
+      transparent 100%) bottom right / 100% 3px no-repeat,
+
+    /* Left border - starts after bottom is complete (75%) */
+    linear-gradient(to top,
+      #6366f1 0%,
+      #6366f1 calc(max(0%, (var(--progress) - 75%) * 4)),
+      transparent calc(max(0%, (var(--progress) - 75%) * 4)),
+      transparent 100%) bottom left / 3px 100% no-repeat,
+
+    /* Dark gray background border */
+    linear-gradient(oklch(var(--border)), oklch(var(--border))) top left / 100% 3px no-repeat,
+    linear-gradient(oklch(var(--border)), oklch(var(--border))) top right / 3px 100% no-repeat,
+    linear-gradient(oklch(var(--border)), oklch(var(--border))) bottom right / 100% 3px no-repeat,
+    linear-gradient(oklch(var(--border)), oklch(var(--border))) bottom left / 3px 100% no-repeat;
 }
