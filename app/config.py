@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file if it exists
 load_dotenv()
 
-DATABASE_URL = "sqlite:///./meeting_records.db"  # For local dev
+DATABASE_URL = "sqlite:///./meet_summarizer.db"  # For local dev
 UPLOAD_DIR = "uploads"
 
 # ---------------------- LLM Configuration ----------------------

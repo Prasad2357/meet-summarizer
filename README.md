@@ -27,7 +27,7 @@ The application uses **FastAPI** to provide a robust, high-performance API backe
 - **`ollama` Python Library**: Used to communicate with the local Ollama API for both transcription and summarization.
 - **Whisper**: The state-of-the-art open-source model used for highly accurate Audio-to-Text **Transcription**.
 - **Phi-3 Mini / Mistral 7B / Llama 3 8B**: Lightweight LLMs used for complex **Summarization** and structured data extraction.
-- **SQLite**: Used via the `meeting_records.db` file for persistent storage of meeting data (transcripts, summaries).
+- **SQLite**: Used via the `meet_summarizer.db` file for persistent storage of meeting data (transcripts, summaries).
 
 ---
 
@@ -47,7 +47,7 @@ While a simple application could be built with a frontend-focused tool like Stre
 - **End-to-End Local Processing**: All transcription and summarization is performed on your machine, ensuring data privacy and no external API costs.
 - **Robust API Backend**: Implemented with **FastAPI** for reliable, asynchronous handling of requests.
 - **Structured JSON Output**: Extracts specific data points like **Summary**, **Action Items**, and **New Requirements** based on `schemas.py`.
-- **Persistent Storage**: Uses a local **SQLite** database (`meeting_records.db`) to store meeting metadata and summaries.
+- **Persistent Storage**: Uses a local **SQLite** database (`meet_summarizer.db`) to store meeting metadata and summaries.
 - **Modular Code**: Separates database models (`models.py`), Pydantic schemas (`schemas.py`), core logic, and API routes for professional development standards.
 
 ---
