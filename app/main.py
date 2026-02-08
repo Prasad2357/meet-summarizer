@@ -19,8 +19,6 @@ logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-# Create DB tables
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Meeting Summarizer API",
