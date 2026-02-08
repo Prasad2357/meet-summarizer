@@ -13,6 +13,8 @@ from app.config import GEMINI_API_KEY, USE_GEMINI, GEMINI_MODEL, OLLAMA_HOST
 
 ENCODER = tiktoken.get_encoding("cl100k_base")  # Mistral 7B compatible
 
+from dotenv import load_dotenv
+load_dotenv()
 
 # ---------------------- Transcript Utilities ----------------------
 
