@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 import ollama
 import json
 import re
@@ -13,8 +16,6 @@ from app.config import GEMINI_API_KEY, USE_GEMINI, GEMINI_MODEL, OLLAMA_HOST
 
 ENCODER = tiktoken.get_encoding("cl100k_base")  # Mistral 7B compatible
 
-from dotenv import load_dotenv
-load_dotenv()
 
 # ---------------------- Transcript Utilities ----------------------
 
@@ -278,19 +279,27 @@ def _call_ollama(model_name: str, prompt: str, temperature: float = 0.3, max_tok
 def _get_llm_response(prompt: str, temperature: float = 0.3, model_name: str = None) -> str:
     """Get LLM response from Gemini (preferred) or Ollama (fallback)"""
     # Try Gemini first if enabled and API key is available
-    if USE_GEMINI and GEMINI_API_KEY:
-        try:
-            logging.info(f"Using Gemini API ({GEMINI_MODEL})")
-            return _call_gemini(prompt, temperature)
-        except Exception as e:
-            logging.warning(f"Gemini failed, falling back to Ollama: {e}")
+    if USE_GEMINI:
+        if not GEMINI_API_KEY:
+            logging.error("❌ USE_GEMINI is true but GEMINI_API_KEY is not set! Please set GEMINI_API_KEY environment variable.")
+            logging.error("Get your key from: https://aistudio.google.com/app/apikey")
+        else:
+            try:
+                logging.info(f"Using Gemini API ({GEMINI_MODEL})")
+                return _call_gemini(prompt, temperature)
+            except Exception as e:
+                logging.warning(f"Gemini failed, falling back to Ollama: {e}")
     
     # Fallback to Ollama
     if model_name:
         logging.info(f"Using Ollama ({model_name})")
         return _call_ollama(model_name, prompt, temperature)
     
-    raise Exception("No LLM available (Gemini failed and no Ollama model specified)")
+    error_msg = "No LLM available. "
+    if USE_GEMINI and not GEMINI_API_KEY:
+        error_msg += "GEMINI_API_KEY is not set in environment variables. "
+    error_msg += "Please configure GEMINI_API_KEY or set up Ollama."
+    raise Exception(error_msg)
 
 
 # ---------------------- Improved Prompt Templates ----------------------

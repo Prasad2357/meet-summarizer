@@ -290,6 +290,8 @@
 .submit-button {
     width: 100%;
     padding: 1rem;
+    height: 52px;
+    /* Fixed height to prevent expansion */
     font-size: 1rem;
     font-weight: 600;
     color: #ffffff;
@@ -301,6 +303,10 @@
     box-shadow: 0 4px 14px rgba(147, 51, 234, 0.3);
     position: relative;
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 .submit-button::before {
@@ -483,6 +489,8 @@
 
     .submit-button {
         padding: 0.875rem;
+        height: 48px;
+        /* Slightly smaller height for mobile */
     }
 }
 
@@ -531,7 +539,7 @@
 
 .submit-button .spinner {
     animation: spin 1s linear infinite;
-    margin-right: 0.5rem;
+    flex-shrink: 0;
 }
 
 .form-input:disabled,
