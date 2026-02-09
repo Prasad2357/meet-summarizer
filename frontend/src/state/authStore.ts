@@ -62,15 +62,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     signup: async (name: string, email: string, password: string) => {
         set({ isLoading: true });
         try {
-            const response = await api.signup(name, email, password);
-            localStorage.setItem("access_token", response.access_token);
-            const decoded = jwtDecode<User>(response.access_token);
-            set({
-                isAuthenticated: true,
-                token: response.access_token,
-                user: decoded,
-                isLoading: false
-            });
+            // Just create the account, don't automatically log in
+            await api.signup(name, email, password);
+            // Don't store token or set authentication state
+            // User must explicitly log in after signup
+            set({ isLoading: false });
         } catch (error) {
             set({ isLoading: false });
             throw error;

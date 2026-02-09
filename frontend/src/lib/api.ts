@@ -1,6 +1,6 @@
-const API_BASE_URL =import.meta.env.VITE_API_URL
-// const IP_ADDRESS = "127.0.0.1:8000"
-// const API_BASE_URL = `http://${IP_ADDRESS}`
+// const API_BASE_URL =import.meta.env.VITE_API_URL
+const IP_ADDRESS = "127.0.0.1:8000"
+const API_BASE_URL = `http://${IP_ADDRESS}`
 
 // Helper function to get auth headers
 function getAuthHeaders(): HeadersInit {

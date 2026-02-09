@@ -250,14 +250,8 @@ const AuthForm = ({ isLogin, setIsLogin }: AuthFormProps) => {
                     )}
 
                     <button type="submit" className="submit-button" disabled={isLoading}>
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="spinner" size={20} />
-                                {isLogin ? 'Signing In...' : 'Creating Account...'}
-                            </>
-                        ) : (
-                            <>{isLogin ? 'Sign In' : 'Create Account'}</>
-                        )}
+                        {isLoading && <Loader2 className="spinner" size={20} />}
+                        {isLogin ? (isLoading ? 'Signing In...' : 'Sign In') : (isLoading ? 'Creating Account...' : 'Create Account')}
                     </button>
                 </form>
 
