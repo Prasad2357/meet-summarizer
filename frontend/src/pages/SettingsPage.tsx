@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { useAuthStore } from '../state/authStore';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../hooks/useTheme';
 import './SettingsPage.css';
 
 export default function SettingsPage() {
     const user = useAuthStore((state) => state.user);
     const logout = useAuthStore((state) => state.logout);
     const navigate = useNavigate();
-    const { applyTheme } = useTheme();
 
     // User preferences state (stored in localStorage)
     const [emailNotifications, setEmailNotifications] = useState(
@@ -16,9 +14,6 @@ export default function SettingsPage() {
     );
     const [defaultMeetingType, setDefaultMeetingType] = useState(
         localStorage.getItem('defaultMeetingType') || 'general'
-    );
-    const [theme, setTheme] = useState(
-        localStorage.getItem('theme') || 'light'
     );
     const [autoDeleteDays, setAutoDeleteDays] = useState(
         localStorage.getItem('autoDeleteDays') || '90'
@@ -31,7 +26,6 @@ export default function SettingsPage() {
         // Save to localStorage
         localStorage.setItem('emailNotifications', emailNotifications.toString());
         localStorage.setItem('defaultMeetingType', defaultMeetingType);
-        localStorage.setItem('theme', theme);
         localStorage.setItem('autoDeleteDays', autoDeleteDays);
 
         // Show success message
@@ -314,45 +308,6 @@ export default function SettingsPage() {
                                     <option value="retro">Retrospective</option>
                                     <option value="client_call">Client Call</option>
                                 </select>
-                            </div>
-
-                            {/* Theme */}
-                            <div>
-                                <label style={{
-                                    display: 'block',
-                                    fontSize: '1rem',
-                                    fontWeight: 600,
-                                    color: '#0f172a',
-                                    marginBottom: '0.5rem'
-                                }}>
-                                    Theme
-                                </label>
-                                <div style={{ display: 'flex', gap: '1rem' }}>
-                                    {['light', 'dark', 'auto'].map((themeOption) => (
-                                        <button
-                                            key={themeOption}
-                                            onClick={() => {
-                                                setTheme(themeOption);
-                                                applyTheme(themeOption as 'light' | 'dark' | 'auto');
-                                            }}
-                                            style={{
-                                                flex: 1,
-                                                padding: '0.75rem',
-                                                borderRadius: '8px',
-                                                border: theme === themeOption ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-                                                background: theme === themeOption ? '#eff6ff' : 'white',
-                                                color: theme === themeOption ? '#3b82f6' : '#64748b',
-                                                fontSize: '0.975rem',
-                                                fontWeight: 600,
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s ease',
-                                                textTransform: 'capitalize'
-                                            }}
-                                        >
-                                            {themeOption}
-                                        </button>
-                                    ))}
-                                </div>
                             </div>
 
                             {/* Auto Delete */}
