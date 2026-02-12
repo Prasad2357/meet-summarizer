@@ -1,4 +1,4 @@
-const API_BASE_URL =import.meta.env.VITE_API_URL
+const API_BASE_URL = import.meta.env.VITE_API_URL
 // const IP_ADDRESS = "127.0.0.1:8000"
 // const API_BASE_URL = `http://${IP_ADDRESS}`
 
@@ -221,4 +221,19 @@ export async function exportMeetingPDF(id: string) {
   return res.blob();
 }
 
-
+export async function googleAuth(token: string) {
+  const res = await fetch(
+    `${API_BASE_URL}/auth/oauth/google`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ token }),
+  }
+  );
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: "Google authentication failed" }));
+    throw new Error(error.detail || "Google authentication failed");
+  }
+  return res.json();
+}

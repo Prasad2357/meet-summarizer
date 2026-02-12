@@ -141,3 +141,6 @@ class UserResponse(UserBase):
 
     class Config:
         from_attributes = True
+
+class GoogleAuthRequest(BaseModel):
+    token: str  # Google OAuth token from frontend

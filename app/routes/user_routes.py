@@ -52,7 +52,14 @@ def signup(payload: UserCreate, db: Session = Depends(get_db)):
 def login(payload: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email).first()
 
-    if not user or not verify_password(payload.password, user.password_hash):
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Check if user has a password (OAuth users don't have passwords)
+    if not user.password_hash:
+        raise HTTPException(status_code=401, detail="This account uses Google sign-in. Please use 'Continue with Google' button.")
+    
+    if not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token = create_access_token({
@@ -62,6 +69,7 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
     })
 
     return {"access_token": token, "token_type": "bearer"}
+
 
 @router.get("/", response_model=List[UserResponse])
 def list_users(db: Session = Depends(get_db)):
