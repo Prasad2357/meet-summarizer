@@ -15,6 +15,7 @@ interface AuthState {
     user: User | null;
     login: (email: string, password: string) => Promise<void>;
     signup: (name: string, email: string, password: string) => Promise<void>;
+    googleLogin: (googleToken: string) => Promise<void>;
     logout: () => void;
     checkAuth: () => void;
 }
@@ -73,8 +74,27 @@ export const useAuthStore = create<AuthState>((set) => ({
         }
     },
 
+    googleLogin: async (googleToken: string) => {
+        set({ isLoading: true });
+        try {
+            const response = await api.googleAuth(googleToken);
+            localStorage.setItem("access_token", response.access_token);
+            const decoded = jwtDecode<User>(response.access_token);
+            set({
+                isAuthenticated: true,
+                token: response.access_token,
+                user: decoded,
+                isLoading: false
+            });
+        } catch (error) {
+            set({ isLoading: false });
+            throw error;
+        }
+    },
+
     logout: () => {
         localStorage.removeItem("access_token");
         set({ isAuthenticated: false, token: null, user: null });
     },
 }));
+
