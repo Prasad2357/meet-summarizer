@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/state/authStore';
@@ -30,27 +30,33 @@ const AuthForm = ({ isLogin, setIsLogin }: AuthFormProps) => {
     const [apiError, setApiError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
 
+    const googleButtonRef = useRef<HTMLDivElement>(null);
+
     // Load Google Sign-In script
     useEffect(() => {
         const initGoogleButton = () => {
-            if (!window.google) return;
+            if (!window.google || !googleButtonRef.current) return;
 
             const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-            if (!clientId) return;
+            if (!clientId) {
+                console.error("Google Client ID is missing");
+                return;
+            }
 
-            window.google.accounts.id.initialize({
-                client_id: clientId,
-                callback: handleGoogleCallback,
-            });
+            try {
+                window.google.accounts.id.initialize({
+                    client_id: clientId,
+                    callback: handleGoogleCallback,
+                });
 
-            const buttonDiv = document.getElementById('google-signin-button');
-            if (buttonDiv) {
-                window.google.accounts.id.renderButton(buttonDiv, {
+                window.google.accounts.id.renderButton(googleButtonRef.current, {
                     theme: "outline",
                     size: "large",
                     width: 420,
                     text: "continue_with",
                 });
+            } catch (error) {
+                console.error("Google Sign-in initialization error:", error);
             }
         };
 
@@ -65,8 +71,29 @@ const AuthForm = ({ isLogin, setIsLogin }: AuthFormProps) => {
 
         if (!document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
             loadGoogleScript();
-        } else if (window.google) {
-            setTimeout(initGoogleButton, 100);
+        } else {
+            // Script exists, check if google object is ready
+            if (window.google && window.google.accounts) {
+                initGoogleButton();
+            } else {
+                // Wait for the script to initialize window.google
+                const checkInterval = setInterval(() => {
+                    if (window.google && window.google.accounts) {
+                        clearInterval(checkInterval);
+                        initGoogleButton();
+                    }
+                }, 100);
+
+                // Set a timeout to stop checking after 5 seconds
+                const timeout = setTimeout(() => {
+                    clearInterval(checkInterval);
+                }, 5000);
+
+                return () => {
+                    clearInterval(checkInterval);
+                    clearTimeout(timeout);
+                };
+            }
         }
     }, []);
 
@@ -335,7 +362,7 @@ const AuthForm = ({ isLogin, setIsLogin }: AuthFormProps) => {
                 </div>
 
                 <div className="social-auth">
-                    <div id="google-signin-button" style={{ width: '100%'}}></div>
+                    <div ref={googleButtonRef} style={{ width: '100%', minHeight: '40px' }}></div>
                 </div>
             </div>
         </div>
