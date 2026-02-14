@@ -2,6 +2,20 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
 // const IP_ADDRESS = "127.0.0.1:8000"
 // const API_BASE_URL = `http://${IP_ADDRESS}`
 
+// Helper function to handle API responses
+async function handleResponse(response: Response) {
+  // If token is invalid/expired, clear auth and redirect to login
+  if (response.status === 401) {
+    localStorage.removeItem("access_token");
+    // Redirect to login page
+    if (window.location.pathname !== '/') {
+      window.location.href = '/';
+    }
+    throw new Error("Session expired. Please log in again.");
+  }
+  return response;
+}
+
 // Helper function to get auth headers
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem("access_token");
@@ -24,6 +38,8 @@ export async function fetchMeetings(limit = 50, skip = 0) {
     }
   )
 
+  await handleResponse(res); // Check for 401 and handle logout
+
   if (!res.ok) {
     throw new Error("Failed to fetch meetings")
   }
@@ -39,6 +55,8 @@ export async function fetchMeetingById(id: string) {
     }
   )
 
+  await handleResponse(res);
+
   if (!res.ok) {
     throw new Error("Failed to fetch meeting")
   }
@@ -52,6 +70,8 @@ export async function fetchMeetingStatus(id: number) {
       headers: getAuthHeaders(),
     }
   )
+
+  await handleResponse(res);
 
   if (!res.ok) {
     throw new Error("Failed to fetch meeting status")
@@ -115,6 +135,8 @@ export async function fetchOverviewStats() {
       headers: getAuthHeaders(),
     }
   );
+
+  await handleResponse(res);
 
   if (!res.ok) {
     throw new Error("Failed to fetch overview stats");

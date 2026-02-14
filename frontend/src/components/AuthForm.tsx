@@ -31,7 +31,7 @@ const AuthForm = ({ isLogin, setIsLogin }: AuthFormProps) => {
     const [successMessage, setSuccessMessage] = useState('');
 
     // Load Google Sign-In script
- useEffect(() => {
+    useEffect(() => {
         const initGoogleButton = () => {
             if (!window.google) return;
 
@@ -48,7 +48,7 @@ const AuthForm = ({ isLogin, setIsLogin }: AuthFormProps) => {
                 window.google.accounts.id.renderButton(buttonDiv, {
                     theme: "outline",
                     size: "large",
-                    width: 350,
+                    width: 420,
                     text: "continue_with",
                 });
             }
@@ -62,7 +62,7 @@ const AuthForm = ({ isLogin, setIsLogin }: AuthFormProps) => {
             script.onload = initGoogleButton;
             document.body.appendChild(script);
         };
-        
+
         if (!document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
             loadGoogleScript();
         } else if (window.google) {
@@ -335,7 +335,7 @@ const AuthForm = ({ isLogin, setIsLogin }: AuthFormProps) => {
                 </div>
 
                 <div className="social-auth">
-                    <div id="google-signin-button" style={{ width: '100%' }}></div>
+                    <div id="google-signin-button" style={{ width: '100%'}}></div>
                 </div>
             </div>
         </div>

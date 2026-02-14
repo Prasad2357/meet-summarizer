@@ -2,8 +2,9 @@ import json
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app import transcription, summarizer
-from app.models import MeetingRecord
+from app.models import MeetingRecord, User
 from app.config import OLLAMA_MODEL, WHISPER_MODEL_SIZE
+from app.routes.email_routes import send_meeting_processed_email
 import logging
 
 
@@ -75,6 +76,22 @@ def process_meeting(record_id: int, file_path: str, meeting_type: str):
 
         db.commit()
         logging.info(f"Successfully processed meeting {record_id}")
+        
+        # 5. Send email notification to user
+        try:
+            user = db.query(User).filter(User.id == record.user_id).first()
+            if user and user.email:
+                logging.info(f"Sending email notification with PDF to {user.email}")
+                send_meeting_processed_email(
+                    user.email,
+                    user.name,
+                    record.file_name,
+                    record.id,
+                    summary_data  # Pass summary data for PDF generation
+                )
+        except Exception as email_error:
+            # Don't fail the whole process if email fails
+            logging.warning(f"Failed to send email notification: {str(email_error)}")
 
     except Exception as e:
         logging.error(f"Error processing meeting {record_id}: {str(e)}")
