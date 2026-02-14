@@ -80,7 +80,7 @@ Create a `.env` file in the root directory and `frontend/.env` for the UI.
 # AI Configuration
 GEMINI_API_KEY=your_gemini_key
 USE_GEMINI=true
-GEMINI_MODEL=gemini-1.5-flash
+GEMINI_MODEL=gemini-2.5-flash
 
 # Database
 DATABASE_URL=postgresql://user:pass@host:port/dbname
