@@ -1,6 +1,6 @@
 import logging
 from fastapi import FastAPI
-from app.routes import transcription_routes, summarization_routes, user_routes, pdf_routes, oauth_routes
+from app.routes import transcription_routes, summarization_routes, user_routes, pdf_routes, oauth_routes, email_routes
 from app.database import Base, engine
 from fastapi.middleware.cors import CORSMiddleware
 from app.models import User  # IMPORTANT: ensure User is imported
@@ -53,4 +53,4 @@ app.include_router(summarization_routes.router, prefix="/records", tags=["Record
 app.include_router(user_routes.router, prefix="/users", tags=["Users"])
 app.include_router(oauth_routes.router, prefix="/auth/oauth", tags=["OAuth"])
 app.include_router(pdf_routes.router, tags=["PDF Export"])
-
+app.include_router(email_routes.router, prefix="/email", tags=["Email"])
