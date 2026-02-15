@@ -10,30 +10,53 @@ import {
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { useAuthStore } from "../state/authStore";
 import { useNavigate } from "react-router-dom";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Search, X } from "lucide-react";
+import { useSearch } from "../context/SearchContext";
 
 export default function TopBar() {
     const { logout, user } = useAuthStore();
     const navigate = useNavigate();
+    const { searchQuery, setSearchQuery } = useSearch();
 
     const handleLogout = () => {
         logout();
         navigate("/");
     };
 
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+    };
+
+    const clearSearch = () => {
+        setSearchQuery("");
+    };
+
     const initial = user?.name ? user.name.charAt(0).toUpperCase() : "U";
 
     return (
         <header className="w-full border-b bg-background p-4 flex items-center justify-between">
-            <input
-                placeholder="Search past meetings..."
-                className="w-72 rounded-md border px-3 py-1.5 text-sm bg-muted"
-            />
+            <div className="relative w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    placeholder="Search past meetings..."
+                    className="w-full rounded-md border pl-9 pr-9 py-1.5 text-sm bg-muted focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                />
+                {searchQuery && (
+                    <button
+                        onClick={clearSearch}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                )}
+            </div>
 
             <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground mr-2">
+                {/* <span className="text-sm text-muted-foreground mr-2">
                     Local Server Online
-                </span>
+                </span> */}
 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
