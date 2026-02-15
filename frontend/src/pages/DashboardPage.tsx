@@ -8,6 +8,8 @@ import { fetchMeetings, deleteMeeting } from "../lib/api";
 import NewAnalysisModal from "../components/new-analysis/NewAnalysisModal";
 import { Button } from "../components/ui/button";
 import Pagination from "../components/common/Pagination";
+import { Search } from "lucide-react";
+import { useSearch } from "../context/SearchContext";
 
 export default function DashboardPage() {
     const [meetings, setMeetings] = useState<MeetingListItem[]>([])
@@ -18,6 +20,7 @@ export default function DashboardPage() {
     const [view, setView] = useState<'grid' | 'list'>('grid')
     const PAGE_SIZE = 12;
     const [page, setPage] = useState(1);
+    const { searchQuery } = useSearch();
 
 
     useEffect(() => {
@@ -91,6 +94,18 @@ export default function DashboardPage() {
         return <p className="p-8 text-red-500">{error}</p>
     }
 
+    // Filter meetings based on search query
+    const filteredMeetings = meetings.filter((meeting) => {
+        if (!searchQuery.trim()) return true;
+
+        const query = searchQuery.toLowerCase();
+        const title = meeting.file_name?.toLowerCase() || "";
+        const summary = meeting.executive_summary?.toLowerCase() || "";
+        const type = meeting.meeting_type?.toLowerCase() || "";
+
+        return title.includes(query) || summary.includes(query) || type.includes(query);
+    });
+
 
     return (
 
@@ -154,9 +169,29 @@ export default function DashboardPage() {
 
 
             {/* Conditional rendering based on view */}
-            {view === 'grid' ? (
+            {filteredMeetings.length === 0 ? (
+                <div className="p-16 text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+                        <Search className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">
+                        {searchQuery ? "No meetings found" : "No meetings yet"}
+                    </h3>
+                    <p className="text-muted-foreground mb-6">
+                        {searchQuery
+                            ? `No meetings match "${searchQuery}". Try a different search term.`
+                            : "Upload your first meeting to get started with AI-powered analysis."
+                        }
+                    </p>
+                    {!searchQuery && (
+                        <Button onClick={() => setOpen(true)}>
+                            New Meeting Analysis
+                        </Button>
+                    )}
+                </div>
+            ) : view === 'grid' ? (
                 <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {meetings.map((meeting) => (
+                    {filteredMeetings.map((meeting) => (
                         <Link
                             key={meeting.id}
                             to={`/meetings/${meeting.id}`}
@@ -187,7 +222,7 @@ export default function DashboardPage() {
 
                     {/* List View Rows */}
                     <div className="space-y-0">
-                        {meetings.map((meeting) => (
+                        {filteredMeetings.map((meeting) => (
                             <Link
                                 key={meeting.id}
                                 to={`/meetings/${meeting.id}`}
